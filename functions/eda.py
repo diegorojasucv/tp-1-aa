@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from optbinning import OptimalBinning
 
 def calcular_estadisticas_categoricas(df):
     """
