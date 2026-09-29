@@ -3,16 +3,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from optbinning import OptimalBinning
+from scipy.cluster import hierarchy
+from scipy.spatial.distance import squareform
+from scipy.stats import spearmanr
 
-def calcular_estadisticas_categoricas(df):
+def calcular_estadisticas_categoricas(df, columnas):
     """
     Calcula estadísticas descriptivas para las variables categóricas del DataFrame:
     Variable, Missing, Niveles, Moda, Frec_Moda, Largo.
     """
-    columnas_categoricas = df.select_dtypes(include=['object', 'category']).columns
-
     filas = []
-    for col in columnas_categoricas:
+    for col in columnas:
         serie = df[col]
         n_missing = serie.isnull().sum()
         niveles = serie.nunique(dropna=True)
@@ -34,33 +35,31 @@ def calcular_estadisticas_categoricas(df):
 
     return estadisticas
 
-def calcular_estadisticas_numericas(df):
+def calcular_estadisticas_numericas(df, columnas):
     """
     Calcula estadísticas descriptivas para las variables numéricas del DataFrame:
     N, valores faltantes, ceros, positivos, negativos, min, max, media,
     percentiles (1%, 5%, 25%, 50%, 75%, 95%, 99%), desvío estándar y
     coeficiente de variación.
     """
-    columnas_numericas = df.select_dtypes(include=[np.number]).columns
-
     estadisticas = pd.DataFrame({
-        'N': df[columnas_numericas].count(),
-        'N Miss': df[columnas_numericas].isnull().sum(),
-        'Missing': df[columnas_numericas].isnull().mean() * 100,
-        'Zeros': (df[columnas_numericas] == 0).sum(),
-        'Positivos': (df[columnas_numericas] > 0).sum(),
-        'Negativos': (df[columnas_numericas] < 0).sum(),
-        'min': df[columnas_numericas].min(),
-        'max': df[columnas_numericas].max(),
-        'mean': df[columnas_numericas].mean(),
-        'p_0.01': df[columnas_numericas].quantile(0.01),
-        'p_0.05': df[columnas_numericas].quantile(0.05),
-        'p_0.25': df[columnas_numericas].quantile(0.25),
-        'p_0.5': df[columnas_numericas].quantile(0.5),
-        'p_0.75': df[columnas_numericas].quantile(0.75),
-        'p_0.95': df[columnas_numericas].quantile(0.95),
-        'p_0.99': df[columnas_numericas].quantile(0.99),
-        'std': df[columnas_numericas].std(),
+        'N': df[columnas].count(),
+        'N Miss': df[columnas].isnull().sum(),
+        'Missing': df[columnas].isnull().mean() * 100,
+        'Zeros': (df[columnas] == 0).sum(),
+        'Positivos': (df[columnas] > 0).sum(),
+        'Negativos': (df[columnas] < 0).sum(),
+        'min': df[columnas].min(),
+        'max': df[columnas].max(),
+        'mean': df[columnas].mean(),
+        'p_0.01': df[columnas].quantile(0.01),
+        'p_0.05': df[columnas].quantile(0.05),
+        'p_0.25': df[columnas].quantile(0.25),
+        'p_0.5': df[columnas].quantile(0.5),
+        'p_0.75': df[columnas].quantile(0.75),
+        'p_0.95': df[columnas].quantile(0.95),
+        'p_0.99': df[columnas].quantile(0.99),
+        'std': df[columnas].std(),
     })
 
     estadisticas['Coeff of Variation'] = estadisticas['std'] / estadisticas['mean']
@@ -75,53 +74,70 @@ def calcular_estadisticas_numericas(df):
 
     return estadisticas
 
+def graficar_clustering_correlacion(df, variables):
+    datos = df.loc[:, variables]
 
-def calcular_correlacion(df, variables=None, metodo="pearson", plot=True, figsize=(12, 8)):
-    """Calcula y opcionalmente grafica la matriz de correlación."""
-    metodos_validos = {"pearson", "spearman", "kendall"}
-    if metodo not in metodos_validos:
-        raise ValueError(f"El método debe ser uno de: {sorted(metodos_validos)}")
+    if datos.shape[1] < 2:
+        raise ValueError("Se necesitan al menos dos variables.")
 
-    if variables is None:
-        columnas = df.select_dtypes(include="number").columns.tolist()
-    else:
-        columnas_faltantes = [columna for columna in variables if columna not in df.columns]
-        if columnas_faltantes:
-            raise KeyError(f"No existen estas columnas: {columnas_faltantes}")
-        columnas = list(variables)
+    if not all(np.issubdtype(dtype, np.number) for dtype in datos.dtypes):
+        raise TypeError("Todas las variables deben ser numéricas.")
 
-    if len(columnas) < 2:
-        raise ValueError("Se necesitan al menos dos variables para calcular correlaciones.")
+    corr = datos.corr(method="spearman").to_numpy()
+    corr = np.nan_to_num(corr, nan=0.0)
+    corr = (corr + corr.T) / 2
+    np.fill_diagonal(corr, 1)
 
-    columnas_no_numericas = [
-        columna for columna in columnas
-        if not pd.api.types.is_numeric_dtype(df[columna])
-    ]
-    if columnas_no_numericas:
-        raise TypeError(f"Estas columnas no son numéricas: {columnas_no_numericas}")
+    distance_matrix = 1 - np.abs(corr)
+    dist_linkage = hierarchy.ward(squareform(distance_matrix))
 
-    matriz_correlacion = df[columnas].corr(method=metodo)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 9))
 
-    if plot:
-        fig, ax = plt.subplots(figsize=figsize)
-        sns.heatmap(
-            matriz_correlacion,
-            ax=ax,
-            cmap="coolwarm",
-            vmin=-1,
-            vmax=1,
-            annot=True,
-            fmt=".2f",
-            square=True,
-            cbar_kws={"label": "Correlación"},
-        )
-        ax.set_title(f"Matriz de correlación ({metodo})")
-        ax.tick_params(axis="x", rotation=90)
-        ax.tick_params(axis="y", rotation=0)
-        fig.tight_layout()
-        plt.show()
+    dendro = hierarchy.dendrogram(
+        dist_linkage,
+        labels=variables,
+        ax=ax1,
+        leaf_rotation=90,
+    )
 
-    return matriz_correlacion
+    dendro_idx = np.arange(len(dendro["ivl"]))
+    hojas = dendro["leaves"]
+    corr_ordenada = corr[hojas, :][:, hojas]
+
+    imagen = ax2.imshow(
+        corr_ordenada,
+        cmap="coolwarm",
+        vmin=-1,
+        vmax=1,
+    )
+
+    ax2.set_xticks(dendro_idx)
+    ax2.set_yticks(dendro_idx)
+    ax2.set_xticklabels(dendro["ivl"], rotation=90)
+    ax2.set_yticklabels(dendro["ivl"])
+
+    # Agregar los valores de correlación con un decimal
+    for i in range(corr_ordenada.shape[0]):
+        for j in range(corr_ordenada.shape[1]):
+            valor = corr_ordenada[i, j]
+            color = "white" if abs(valor) >= 0.5 else "black"
+
+            ax2.text(
+                j,
+                i,
+                f"{valor:.1f}",
+                ha="center",
+                va="center",
+                color=color,
+                fontsize=8,
+            )
+
+    ax2.set_title("Matriz de correlación de Spearman")
+    fig.colorbar(imagen, ax=ax2, fraction=0.046, pad=0.04)
+
+    fig.tight_layout()
+    return fig, (ax1, ax2)
+
 
 def calcular_bivariado_iv(df, target_col, variables=None, plot=True):
     """
@@ -188,3 +204,123 @@ def calcular_bivariado_iv(df, target_col, variables=None, plot=True):
 
     resultado_df = pd.DataFrame(resultados, columns=["variable", "tipo", "iv"])
     return resultado_df.sort_values("iv", ascending=False).reset_index(drop=True)
+
+def graficar_boxplot(df: pd.DataFrame, variable_categorica: str, variable_numerica, figsize=None, n_cols=3):
+    """
+    Genera boxplots de una o varias variables numéricas agrupadas por una variable categórica,
+    organizados en una grilla de subplots, usando seaborn.
+
+    Parámetros:
+    -----------
+    df : pd.DataFrame
+        DataFrame que contiene los datos.
+    variable_categorica : str
+        Nombre de la columna categórica para el eje x.
+    variable_numerica : str o list
+        Nombre (o lista de nombres) de la(s) columna(s) numérica(s) para el eje y.
+    figsize : tuple, opcional
+        Tamaño de la figura completa. Si es None, se calcula automáticamente.
+    n_cols : int
+        Número de columnas en la grilla de subplots.
+    """
+    if isinstance(variable_numerica, str):
+        variables_numericas = [variable_numerica]
+    else:
+        variables_numericas = variable_numerica
+
+    n_vars = len(variables_numericas)
+    n_cols = min(n_cols, n_vars)
+    n_rows = int(np.ceil(n_vars / n_cols))
+
+    if figsize is None:
+        figsize = (n_cols * 4, n_rows * 3.5)
+
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=figsize)
+
+    if n_vars == 1:
+        axes = np.array([axes])
+    axes = axes.flatten()
+
+    for i, var_num in enumerate(variables_numericas):
+        ax = axes[i]
+        sns.boxplot(data=df, x=variable_categorica, y=var_num, order=["Desertor", "En Curso", "Graduado"], ax=ax)
+        ax.set_title(f"{var_num}", fontsize=10)
+        ax.set_xlabel(variable_categorica, fontsize=9)
+        ax.set_ylabel(var_num, fontsize=9)
+        ax.tick_params(axis='x', rotation=45, labelsize=8)
+        ax.tick_params(axis='y', labelsize=8)
+
+    # Ocultar ejes sobrantes
+    for j in range(n_vars, len(axes)):
+        fig.delaxes(axes[j])
+
+    plt.tight_layout()
+    plt.show()    
+
+def graficar_barras_apiladas(df: pd.DataFrame, variable_categorica_x: str, variables_categoricas_y, figsize=None, n_cols=3):
+    """
+    Genera gráficos de barras apiladas al 100% para una o varias variables categóricas
+    en función de una variable categórica en el eje x, organizados en una grilla de subplots.
+
+    Parámetros:
+    -----------
+    df : pd.DataFrame
+        DataFrame que contiene los datos.
+    variable_categorica_x : str
+        Nombre de la columna categórica para el eje x.
+    variables_categoricas_y : str o list
+        Nombre (o lista de nombres) de la(s) columna(s) categórica(s) a apilar en el eje y.
+    figsize : tuple, opcional
+        Tamaño de la figura completa. Si es None, se calcula automáticamente.
+    n_cols : int
+        Número de columnas en la grilla de subplots.
+    """
+    if isinstance(variables_categoricas_y, str):
+        variables_y = [variables_categoricas_y]
+    else:
+        variables_y = variables_categoricas_y
+
+    n_vars = len(variables_y)
+    n_cols = min(n_cols, n_vars)
+    n_rows = int(np.ceil(n_vars / n_cols))
+
+    if figsize is None:
+        figsize = (n_cols * 12, n_rows * 5)
+
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=figsize)
+
+    if n_vars == 1:
+        axes = np.array([axes])
+    axes = axes.flatten()
+
+    for i, var_y in enumerate(variables_y):
+        ax = axes[i]
+        tabla = pd.crosstab(df[variable_categorica_x], df[var_y], normalize='index') * 100
+        tabla.plot(kind='bar', stacked=True, ax=ax, colormap='tab20', legend=False)
+        ax.set_title(f"{var_y} por {variable_categorica_x}", fontsize=10)
+        ax.set_xlabel(variable_categorica_x, fontsize=9)
+        ax.set_ylabel("Porcentaje (%)", fontsize=9)
+        ax.tick_params(axis='x', rotation=45, labelsize=8)
+        ax.tick_params(axis='y', labelsize=8)
+        ax.legend(title=var_y, bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=7)
+
+    # Ocultar ejes sobrantes
+    for j in range(n_vars, len(axes)):
+        fig.delaxes(axes[j])
+
+    plt.tight_layout()
+    plt.show()    
+
+def calcular_frecuencias(df, variable):
+    """Devuelve la frecuencia y la frecuencia relativa (%) de una variable."""
+    if variable not in df.columns:
+        raise ValueError(f"La variable '{variable}' no existe en el DataFrame.")
+
+    frecuencias = df[variable].value_counts(dropna=False)
+    resultado = pd.DataFrame({
+        "Frecuencia": frecuencias,
+        "Frecuencia relativa (%)": frecuencias / len(df) * 100,
+    })
+    resultado.index.name = variable
+    return resultado
+
