@@ -4,27 +4,27 @@
 
 ## Resumen
 
-> **Completar al finalizar el análisis.** Presentar en un máximo de 200 palabras: el problema estudiado, los datos utilizados, los modelos comparados, el resultado principal y la conclusión más importante. No incluir información que no se desarrolle posteriormente en el informe.
+Este trabajo analiza variables asociadas con la deserción universitaria y compara modelos para clasificar la situación académica de los estudiantes. Se utilizó un conjunto de datos de 50.000 registros y se abordaron dos tareas: una clasificación multiclase de graduados, desertores y estudiantes en curso, y una clasificación binaria de graduados y desertores. Los datos se dividieron en entrenamiento y prueba en una proporción de 80/20, con estratificación, y los hiperparámetros se seleccionaron mediante validación cruzada estratificada de cinco pliegues. El mejor resultado multiclase fue de Gradient Boosting, con un F1-macro de 0,783; para la tarea binaria, el mayor F1-macro fue 0,940, también con Gradient Boosting. En el modelo logístico explicativo, el índice de rendimiento académico y la morosidad concentraron la mayor capacidad predictiva según la importancia por permutación. Estos resultados muestran que el rendimiento del primer año aporta información relevante para distinguir los estados académicos, aunque la clasificación de estudiantes que continúan en curso es menos precisa. Las asociaciones observadas no deben interpretarse como causales y el modelo requiere validación adicional antes de un uso institucional.
 
 ## Introducción
 
-Este trabajo analiza los determinantes más importantes de la deserción universitaria y desarrolla un modelo predictivo para estimar el riesgo de abandono de los estudiantes al finalizar su primer año. Identificar este riesgo y las variables de mayor impacto resulta fundamental para que áreas como Bienestar Estudiantil o Secretaría Académica puedan realizar intervenciones directas e informadas.
+El objetivo de este trabajo es predecir qué estudiantes desertarán al finalizar el primer año universitario, utilizando información académica y personal disponible hasta ese momento. Identificar entonces a estudiantes que podrían necesitar apoyo puede ayudar a áreas como Bienestar Estudiantil o Secretaría Académica a planificar intervenciones oportunas; las predicciones, sin embargo, no deben utilizarse como decisiones automáticas sobre las trayectorias individuales.
 
-La literatura teórica (Tinto, 1975, 1993; Bean, 1980) y empírica (Yorke y Longden, 2004; OECD, 2019) muestra que la deserción es un fenómeno multicausal, determinado por la interacción de factores individuales, institucionales, socioeconómicos y de integración académica. Debido a que la relevancia de estas variables varía según el contexto, este estudio busca evaluar qué factores resultan más informativos en el conjunto de datos analizado.
+La literatura teórica (Tinto, 1975, 1993; Bean, 1980; Bean y Metzner, 1985) y empírica (Yorke y Longden, 2004; OECD, 2019) caracteriza la deserción como un fenómeno multicausal, relacionado con factores individuales, institucionales, socioeconómicos y de integración académica. Como la relevancia de estos factores puede variar según el contexto, este estudio evalúa cuáles resultan más informativos en el conjunto de datos analizado, sin asumir que las asociaciones estimadas sean causales.
 
-Para responder a la pregunta central **¿qué variables permiten explicar y predecir mejor la deserción universitaria después del primer año?**, se realizará un análisis exploratorio y se estructurará la modelado en dos etapas: una clasificación multiclase (graduados, desertores y en curso) donde básicamente estamos interesados en comprender la categoría en curso, y una binaria (graduados vs. desertores). Evaluando los modelos mediante el *F1-score*, se espera confirmar que el desempeño académico inicial, la situación financiera (deuda y becas), la edad y la modalidad de ingreso se posicionen entre los predictores más determinantes.
+La pregunta central es **¿qué variables permiten distinguir y predecir mejor la deserción universitaria a partir de la información del primer año?** Para responderla, se realiza un análisis exploratorio y se comparan dos tareas: una clasificación multiclase (graduado, desertor y en curso), que permite examinar especialmente la identificación de quienes continúan estudiando, y una clasificación binaria (graduado o desertor), que excluye los casos en curso. Se plantea como hipótesis que el desempeño académico, la situación financiera, la edad y algunas características de ingreso aportan información predictiva. El informe presenta los datos y el procedimiento, los resultados de ambas tareas y, finalmente, sus alcances y limitaciones.
 
 ## Materiales y métodos
 
-Usamos la totalidad del dataset universitario (50k lineas). Las variables fueron renombradas usando la metedologia de *lower_snake_case*. Además, muchas variables catégoricas fueron transformadas a booleanas para facilitar su análsis y posterior uso en los algoritmos. Tambien, se crearon nuevas variables númericas realizando promedios o ratios con las variables existentes.
+Se utilizó el conjunto de datos universitario provisto para el trabajo práctico, con 50.000 registros y 27 variables originales. Las variables se renombraron con el formato *lower_snake_case*. Algunas variables categóricas se recodificaron como indicadores binarios y se construyeron variables numéricas derivadas mediante promedios y razones entre variables existentes. No se dispone de información adicional sobre el procedimiento de recolección de los datos, por lo que no es posible evaluar su representatividad más allá de la muestra analizada.
 
 ### i) Datos y variables explicativas (E)
 
-El dataset original contiene 50 mil líneas y 27 variables. Al analizar tanto las variables númericas como categóricas podemos apreciar de que no existen valores nulos en el dataset. Otro punto importante es que para las variables númericas que representan la edad, puntajes, unidades créditicias, etc. no presentan valores negativos, lo cual esta asociado con la lógica esperada. En la tabla 1 y 2 se puede ver con más detalle los principales descriptivos de las principales variables que vamos a usar más adelante.
+El conjunto original contiene 50.000 registros y 27 variables. En las variables analizadas no se detectaron valores faltantes; además, las variables numéricas de edad, puntajes y unidades curriculares no presentan valores negativos. La Tabla 1 resume los estadísticos de las principales variables numéricas y la Tabla 2 presenta la cantidad de niveles y la categoría más frecuente de las variables categóricas consideradas. La ausencia de valores faltantes y negativos es consistente con lo esperado, aunque no permite descartar otros posibles problemas de calidad o sesgos en el origen de los datos. En particular, la variable denominada `ratio_aprobadas_inscritas` tiene un máximo de 1,80; si representa estrictamente unidades aprobadas sobre inscritas, conviene revisar cómo se construyó ese valor, ya que supera el límite esperado de 1.
 
-Tabla 1. *Resumen descriptivo de las variables númericas del dataset ($N = 50.000$)*
+Tabla 1. *Resumen descriptivo de las variables numéricas del conjunto de datos ($N = 50.000$)*
 
-| Variable | $N$ | Miss | Missing (%) | Zeros | Positivos | Negativos | Min | Max | Mean | $p_{0.01}$ | $p_{0.05}$ | $p_{0.25}$ | $p_{0.50}$ | $p_{0.75}$ | $p_{0.95}$ | $p_{0.99}$ | Std | Coeff of Variation |
+| Variable | $N$ | Faltantes | Faltantes (%) | Ceros | Positivos | Negativos | Mín. | Máx. | Media | $p_{0.01}$ | $p_{0.05}$ | $p_{0.25}$ | $p_{0.50}$ | $p_{0.75}$ | $p_{0.95}$ | $p_{0.99}$ | DE | CV |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | **cualificacion_promedio** | 50.000 | 0 | 0,00 % | 0 | 50.000 | 0 | 48,00 | 95,00 | 66,26 | 51,99 | 58,00 | 62,00 | 67,00 | 70,00 | 75,00 | 80,00 | 5,52 | 0,08 |
 | **puntaje_ingreso** | 50.000 | 0 | 0,00 % | 0 | 50.000 | 0 | 48,00 | 95,00 | 62,67 | 49,00 | 52,00 | 59,00 | 62,00 | 66,00 | 75,00 | 80,00 | 6,28 | 0,10 |
@@ -45,30 +45,30 @@ Tabla 1. *Resumen descriptivo de las variables númericas del dataset ($N = 50.0
 | **ingresos_familia_nivel** | 50.000 | 0 | 0,00 % | 0 | 50.000 | 0 | 1,00 | 5,00 | 2,24 | 1,00 | 1,00 | 1,00 | 2,00 | 3,00 | 4,50 | 5,00 | 1,12 | 0,50 |
 | **demanda_cog_familia_nivel** | 50.000 | 0 | 0,00 % | 0 | 50.000 | 0 | 1,00 | 5,00 | 2,24 | 1,00 | 1,00 | 1,00 | 2,00 | 3,00 | 4,50 | 5,00 | 1,12 | 0,50 |
 
-<small>Resumen de estadísticos descriptivos, distribuciones de percentiles y proporciones de valores nulos/ceros para la cohorte analizada. $N$ = Tamaño de la muestra (número total de registros); Miss = Cantidad de datos faltantes; Missing (%) = Porcentaje de datos faltantes; Zeros = Cantidad de valores iguales a cero; Positivos / Negativos = Frecuencia de valores estrictamente mayores o menores a cero; Min / Max = Valor mínimo y máximo observado; Mean = Media aritmética; $p_{0.01}, p_{0.05}, \dots, p_{0.99}$ = Percentiles específicos del 1 %, 5 %, 25 % (primer cuartil), 50 % (mediana), 75 % (tercer cuartil), 95 % y 99 %; Std = Desviación estándar; Coeff of Variation = Coeficiente de variación (Std / Mean); uc = Unidades curriculares.</small>
+<small>Estadísticos descriptivos, percentiles y frecuencias de valores faltantes y ceros. $N$ = número de registros; Positivos/Negativos = valores mayores/menores que cero; DE = desviación estándar; CV = coeficiente de variación (DE / media); $p_{0.01}$ a $p_{0.99}$ = percentiles 1, 5, 25, 50, 75, 95 y 99; uc = unidades curriculares. En las variables binarias, los ceros y positivos indican las frecuencias de las categorías 0 y 1, respectivamente.</small>
 
 Tabla 2. *Resumen descriptivo de las variables categóricas del modelo ($N = 50.000$)*
 
-| Variable | Missing | Niveles | Moda | Frec_Moda | Largo |
+| Variable | Faltantes | Niveles | Moda | Frecuencia de la moda | Registros |
 | :--- | :---: | :---: | :--- | :---: | :---: |
 | **Estudios_máximos_antes_de_la_inscripción** | 0 | 5 | Educación Secundaria | 43.950 | 50.000 |
 | **estado_civil** | 0 | 6 | Soltero | 45.861 | 50.000 |
 | **modo_aplicacion** | 0 | 4 | Acceso General | 34.694 | 50.000 |
 | **macro_categoria_carrera** | 0 | 6 | Comunicación, marketing y diseño | 12.490 | 50.000 |
 
-<small>Resumen de propiedades para las variables cualitativas y categóricas del conjunto de datos. Variable = Nombre del atributo analizado; Missing = Cantidad de datos faltantes; Niveles = Número de categorías únicas o distintas de la variable; Moda = Categoría con mayor frecuencia de aparición; Frec_Moda = Frecuencia absoluta (número de casos) correspondientes a la moda; Largo = Total de registros evaluados ($N$).</small>
+<small>Propiedades de las variables categóricas. Niveles = cantidad de categorías distintas; Moda = categoría más frecuente; Frecuencia de la moda = número de registros en esa categoría; Registros = total de observaciones analizadas.</small>
 
 
 ### ii) Variable respuesta y tarea objetivo (T)
 
-La variable respuesta es `target`, con tres estados: **Graduado**, **Desertor** y **En curso**. Para la tarea multiclase se conservarán las tres categorías. Para la tarea binaria se excluirá temporalmente la categoría **En curso** y se clasificarán únicamente los casos **Graduado** y **Desertor**, de acuerdo con el objetivo de estimar el riesgo de deserción una vez finalizado el primer año.
+La variable respuesta es `target`, con tres estados: **Graduado**, **Desertor** y **En curso**. En la tarea multiclase se conservaron las tres categorías. Para la tarea binaria se excluyeron los casos **En curso** y se clasificaron únicamente los registros con estado **Graduado** o **Desertor**. Por lo tanto, esta tarea estima la probabilidad de pertenecer a uno de esos dos estados dentro de la muestra analizada; no clasifica el estado de quienes siguen en curso.
 
-Las etiquetas fueron tipificadas de la siguiente manera:
+Para la clasificación multiclase, las etiquetas se codificaron de la siguiente manera:
   - Graduado igual a 0
   - Desertor igual a 1
   - En Curso igual a 2
 
-La tabla 3 muestra la distribución de la variable objetivo. Podemos notar que no hay un desbalanceo llamativo en ninguna categoría y que la tasa de graduados es casi del 50%.
+La Tabla 3 muestra que graduados y desertores representan, respectivamente, el 47,41 % y el 33,06 % de la muestra completa, mientras que el 19,53 % permanece en curso. La distribución no está equilibrada por completo; por ello se estratificaron las particiones y se utilizó F1-macro, que asigna el mismo peso a cada clase, en vez de basar la comparación únicamente en la clase más frecuente.
 
 Tabla 3. *Distribución de frecuencias de la variable objetivo (target) ($N = 50.000$)*
 
@@ -85,63 +85,62 @@ Tabla 3. *Distribución de frecuencias de la variable objetivo (target) ($N = 50
 
 #### Análisis exploratorio de los datos
 
-Antes de hacer el entrenamiento de los modelos vamos a incluir un análisis exploratorio que hicimos en el conjunto de datos.
+El análisis exploratorio se realizó antes de ajustar los modelos. La Figura 1 presenta el agrupamiento jerárquico y la matriz de correlación de Spearman para las variables numéricas. Se observa una asociación alta entre las unidades curriculares inscritas y aprobadas y las notas de ambos semestres (en varios pares, aproximadamente entre 0,8 y 1,0). También se observa una correlación negativa de alrededor de -0,5 entre los indicadores de deuda y morosidad. Estas relaciones indican que algunas variables contienen información redundante; por eso, para el modelo logístico explicativo se redujo el conjunto de predictores académicos y se construyó un índice compuesto. La correlación, por sí sola, no demuestra que una variable sesgue la importancia de otra ni permite inferir causalidad.
 
-El en Figura 1 podemos ver que todas las variables que involucran unidades curriculares (inscritas y aprobadas) y notas estan bastante correlacionadas entre ellas, con coeficientes entre 0.8 y 0.9. Por otra parte, las variables que indican si un estudiante es moroso o presenta deuda tambien presentan una relación no tan fuerte (-0.5). Cuando creemos más adelante el modelo explicativo es importante excluir aquellas variables que esten correlacionadas para evitar sesgar el feature importance.
+![Matriz de correlación de las variables numéricas](../images/corr_todas_variables.png)
+Figura 1. *Agrupamiento jerárquico y matriz de correlación de Spearman de las variables numéricas.* Los valores de la matriz representan correlaciones por rangos; el agrupamiento muestra qué variables presentan patrones de asociación similares.
 
-Figura 1. *Matriz de Correlación de todas las variables númericas*.
-![Matriz de correlación](../images/corr_todas_variables.png)
-<small>[COMPLEMENTAR]</small>
+La Figura 2 compara las distribuciones de seis variables numéricas según el estado académico. El promedio de notas y la razón de unidades aprobadas sobre inscritas muestran diferencias más marcadas entre desertores y graduados. En cambio, algunas distribuciones de graduados y estudiantes en curso se superponen, aunque esto no implica que ambos estados sean equivalentes. Esta superposición ayuda a contextualizar la dificultad del modelo multiclase para identificar correctamente la categoría en curso, como se verá en la Tabla 6.
 
+![Diagramas de caja de las principales variables numéricas por estado académico](../images/boxplot.png)
+Figura 2. *Distribución de variables numéricas según la categoría de `target`.* Las líneas centrales representan las medianas, las cajas el rango intercuartílico y los puntos las observaciones atípicas.
 
-En el Figura 2 podemos ver la distribuciones de algunas variables númericas con la variable target en el eje x. Podemos apreciar que generalmente la mediana y la apertura de las cajas en mucho mas parecida en las categorías "En Curso" y "Graduado" en comparación a la categoría "Desertor". Es muy probable que cuando entrenemos el modelo multiclase le cueste separar estas dos categorías parecidas. 
-
-Figura 2. *Boxplot para las principales variables numericas por el target*.
-![Boxplot](../images/boxplot.png)
-<small>[COMPLEMENTAR].</small>
-
-En la Tabla 4 tenemos el Informatio Value (IV) de las variables númericas y categoricas usando la variable target. Esta métrica mide la capacidad explicativa de una variable independiente para separar o predecir una clase binaria ("Graduado"/"Desertado"). Permite cuantificar la fuerza predictiva de cada variable y seleccionar las mejores características antes de entrenar un modelo. El top cinco de las varibales con más "poder" predictivo son: i) el ratio de materias aprobadas e inscritas, ii) el promedio de las notas en el primer y segundo semestre, iii) el promedio de la cantidad de evaluaciones en el primer y segundo semestre, iv) si es moroso y v) si es becado.
+La Tabla 4 ordena las variables por su Valor de Información (IV), calculado para distinguir las categorías graduado y desertor en la tarea binaria. El mayor valor corresponde a `ratio_aprobadas_inscritas` (5,38), seguido por `promedio_notas_semestres` (4,33), el promedio de evaluaciones (1,65), la morosidad (1,42) y la condición de becario (0,97). El orden sugiere que el rendimiento académico y ciertas variables financieras aportan información para separar los dos estados. Sin embargo, IV no mide causalidad ni equivale al desempeño de un modelo; los valores particularmente elevados deben leerse como señales de asociación intensa y revisarse teniendo en cuenta la definición y el momento de medición de las variables.
 
 Tabla 4. *Valor de Información (IV) por variable predictora*
 
 | Variable | Tipo | IV |
 | :--- | :---: | :---: |
-| **ratio_aprobadas_inscritas** | numerical | 5,38 |
-| **promedio_notas_semestres** | numerical | 4,33 |
-| **promedio_cant_evaluaciones_semestres** | numerical | 1,65 |
-| **es_moroso** | categorical | 1,42 |
-| **es_becado** | categorical | 0,97 |
-| **edad_inscripcion** | numerical | 0,89 |
-| **carrera** | categorical | 0,85 |
-| **modo_aplicacion** | categorical | 0,63 |
-| **sexo** | categorical | 0,57 |
-| **tiene_deuda** | categorical | 0,34 |
+| **ratio_aprobadas_inscritas** | Numérica | 5,38 |
+| **promedio_notas_semestres** | Numérica | 4,33 |
+| **promedio_cant_evaluaciones_semestres** | Numérica | 1,65 |
+| **es_moroso** | Categórica | 1,42 |
+| **es_becado** | Categórica | 0,97 |
+| **edad_inscripcion** | Numérica | 0,89 |
+| **carrera** | Categórica | 0,85 |
+| **modo_aplicacion** | Categórica | 0,63 |
+| **sexo** | Categórica | 0,57 |
+| **tiene_deuda** | Categórica | 0,34 |
 
-<small>Valor de Información (Information Value - IV) para cada variable candidata del modelo. Variable = Nombre del atributo analizado; Tipo = Naturaleza de la variable (numerical = numérica, categorical = categórica); IV = Métrica de poder predictivo (valores IV > 0.3 indican un poder predictivo fuerte, e IV > 0.5 un poder predictivo muy fuerte).</small>
+<small>Valor de Información (IV) por variable candidata para la tarea binaria graduado/desertor. IV resume la capacidad de separación asociada a cada predictor; sus valores no son porcentajes ni efectos causales y dependen del procedimiento de agrupación utilizado.</small>
 
-#### Separación del dataset
+#### Partición del conjunto de datos
 
-Para ambos modelos se separa el dataset en train y test (80/20) estratificando por la variable obtivo. Además, se utilizará exclusivamente el **F1-score** para evaluar y comparar los modelos, tanto en la tarea binaria como en la multiclase. Esta decisión se fundamenta en que esta métrica es mucho mas robusta cuando hay presencia de desbalance.
+Para cada tarea se dividieron los datos en conjuntos de entrenamiento y prueba en una proporción de 80/20, con `random_state=42` y estratificación según la variable objetivo. La búsqueda de hiperparámetros se realizó mediante validación cruzada estratificada de cinco pliegues sobre el conjunto de entrenamiento; el preprocesamiento categórico se ajustó dentro de los *pipelines* para evitar fuga de información entre pliegues. Se compararon los modelos con F1-macro, que promedia el F1 de cada clase con igual peso y resulta pertinente ante la distribución desigual de las categorías. Esta métrica no elimina el desbalance ni sustituye el examen de los errores por clase, por lo que también se presenta la matriz de confusión multiclase. Los F1 reportados en las Tablas 5 y 7 corresponden al conjunto de prueba.
 
-#### Clasificación multiclase
+El preprocesamiento de los modelos comparativos codificó las variables categóricas mediante *one-hot encoding*. Las variables numéricas se conservaron en sus escalas originales, excepto las usadas en el índice del modelo explicativo. Esta decisión debe tenerse en cuenta al interpretar los resultados de SVM, K-NN y la regresión logística regularizada, que pueden ser sensibles a la escala de los predictores.
 
-A continuación, entrenamos el modelo multiclase para diferentes hiperparámetros para cada modelo señalados en la Tabla 5. Se usó validación cruzada con 5 splits. Para los modelos de regresión logística se uso la estrategia de one-vs-one y one-vs-rest. Podemos ver que el modelo con mejor performance es AdaBoost, obteniendo un f1-score de 0.78.
+## Resultados
+
+### Clasificación multiclase
+
+En la clasificación multiclase se compararon los modelos y las estrategias resumidos en la Tabla 5. En las regresiones logísticas se evaluaron los esquemas *one-vs-rest* (OvR) y *one-vs-one* (OvO); SVM implementó OvO y los demás clasificadores admitieron las tres clases directamente. Gradient Boosting obtuvo el mayor F1-macro (0,783), seguido por Random Forest (0,777) y SVM (0,773). La diferencia entre el mejor modelo y SVM es pequeña, por lo que no debe interpretarse como una ventaja concluyente sin evaluar la variabilidad de las particiones.
 
 Tabla 5. *Resultados del ajuste de hiperparámetros y evaluación de modelos de clasificación*
 
 | Modelo | Estrategia multiclase | Hiperparámetros y rangos evaluados | Valores finales | F1-score |
 | :--- | :--- | :--- | :--- | :---: |
-| **Regresión Logística (One-vs-Rest)** | One-vs-Rest (OvR) | `penalty`: ["l1", "l2", "elasticnet"]<br>`C`: [0.001, 0.01, 0.1, 1, 10, 100]<br>`l1_ratio`: [0.1, 0.5, 0.9] *(para elasticnet)* | `penalty`: 'elasticnet'<br>`C`: 1<br>`l1_ratio`: 0.9 | 0,761329 |
-| **Regresión Logística (One-vs-One)** | One-vs-One (OvO) | `penalty`: ["l1", "l2", "elasticnet"]<br>`C`: [0.001, 0.01, 0.1, 1, 10, 100]<br>`l1_ratio`: [0.1, 0.5, 0.9] *(para elasticnet)* | `penalty`: 'l1'<br>`C`: 10 | 0,772528 |
-| **SVM** *(SVC)* | One-vs-One (OvO nativo) | `C`: [0.1, 1, 10, 100] | `C`: 100 | 0,773364 |
-| **K-NN** | Directa (Multiclase nativa) | `n_neighbors`: [3, 5, 7, 9, 11, 13, 15] | `n_neighbors`: 15 | 0,731838 |
-| **Bagging / Random Forest** | Directa (Multiclase nativa) | `n_estimators`: [100, 200, 400]<br>`max_depth`: [None, 5, 10, 20]<br>`min_samples_split`: [2, 5, 10]<br>`min_samples_leaf`: [1, 2, 4]<br>`max_features`: ["sqrt", "log2"] | `n_estimators`: 200<br>`max_depth`: 20<br>`min_samples_split`: 10<br>`min_samples_leaf`: 1<br>`max_features`: 'sqrt' | 0,776809 |
-| **Árbol de decisión** | Directa (Multiclase nativa) | `criterion`: ["gini", "entropy"]<br>`max_depth`: [None, 3, 5, 10, 20]<br>`min_samples_split`: [2, 5, 10]<br>`min_samples_leaf`: [1, 2, 4] | `criterion`: 'gini'<br>`max_depth`: 5<br>`min_samples_leaf`: 4<br>`min_samples_split`: 2 | 0,768979 |
-| **Boosting** *(Gradient Boosting)* | Directa (Multiclase nativa) | `n_estimators`: [100, 200]<br>`learning_rate`: [0.01, 0.1, 0.2]<br>`max_depth`: [2, 3, 5]<br>`subsample`: [0.8, 1.0] | `n_estimators`: 100<br>`learning_rate`: 0.1<br>`max_depth`: 5<br>`subsample`: 0.8 | 0,782822 |
+| **Regresión Logística (One-vs-Rest)** | One-vs-Rest (OvR) | `penalty`: ["l1", "l2", "elasticnet"]<br>`C`: [0.001, 0.01, 0.1, 1, 10, 100]<br>`l1_ratio`: [0.1, 0.5, 0.9] *(para elasticnet)* | `penalty`: 'elasticnet'<br>`C`: 1<br>`l1_ratio`: 0.9 | 0,7613 |
+| **Regresión Logística (One-vs-One)** | One-vs-One (OvO) | `penalty`: ["l1", "l2", "elasticnet"]<br>`C`: [0.001, 0.01, 0.1, 1, 10, 100]<br>`l1_ratio`: [0.1, 0.5, 0.9] *(para elasticnet)* | `penalty`: 'l1'<br>`C`: 10 | 0,7725 |
+| **SVM** *(SVC)* | One-vs-One (OvO nativo) | `C`: [0.1, 1, 10, 100] | `C`: 100 | 0,7734 |
+| **K-NN** | Directa (Multiclase nativa) | `n_neighbors`: [3, 5, 7, 9, 11, 13, 15] | `n_neighbors`: 15 | 0,7318 |
+| **Bagging / Random Forest** | Directa (Multiclase nativa) | `n_estimators`: [100, 200, 400]<br>`max_depth`: [None, 5, 10, 20]<br>`min_samples_split`: [2, 5, 10]<br>`min_samples_leaf`: [1, 2, 4]<br>`max_features`: ["sqrt", "log2"] | `n_estimators`: 200<br>`max_depth`: 20<br>`min_samples_split`: 10<br>`min_samples_leaf`: 1<br>`max_features`: 'sqrt' | 0,7768 |
+| **Árbol de decisión** | Directa (Multiclase nativa) | `criterion`: ["gini", "entropy"]<br>`max_depth`: [None, 3, 5, 10, 20]<br>`min_samples_split`: [2, 5, 10]<br>`min_samples_leaf`: [1, 2, 4] | `criterion`: 'gini'<br>`max_depth`: 5<br>`min_samples_leaf`: 4<br>`min_samples_split`: 2 | 0,7690 |
+| **Boosting** *(Gradient Boosting)* | Directa (Multiclase nativa) | `n_estimators`: [100, 200]<br>`learning_rate`: [0.01, 0.1, 0.2]<br>`max_depth`: [2, 3, 5]<br>`subsample`: [0.8, 1.0] | `n_estimators`: 100<br>`learning_rate`: 0.1<br>`max_depth`: 5<br>`subsample`: 0.8 | 0,7828 |
 
-<small>Resumen de configuraciones, estrategias multiclase e hiperparámetros optimizados mediante búsqueda en rejilla (GridSearchCV) con validación cruzada estratificada de 5 pliegues (StratifiedKFold, 5 splits). SVM = Support Vector Machine; K-NN = K-Nearest Neighbors; OvR = One-vs-Rest; OvO = One-vs-One; F1-score = Métrica de evaluación macro (f1_macro) obtenida en el conjunto de prueba.</small>
+<small>Hiperparámetros seleccionados mediante búsqueda en rejilla (GridSearchCV) y validación cruzada estratificada de cinco pliegues; F1-macro calculado en el conjunto de prueba y redondeado a cuatro decimales. SVM = máquina de soporte vectorial; K-NN = vecinos más cercanos; OvR = uno contra el resto; OvO = uno contra uno.</small>
 
-Si hacemos una Matriz de Confusión (Tabla 6) del mejor modelo Gradient Boosting, vemos que para los casos reales de la categoría "En Curso", el modelo predice el 60% de los casos de manera correcta, pero casi el 30% de los casos los predice como "Graduados", lo cual nos indica que el modelo le cuesta separar estas categorías y pudieramos decir que en al menos este dataset pudieramos considerarlos como un mismo grupo, ya que como vimos tambien en los boxplot las distribuciones en las variables númericas son muy similares.
+La Tabla 6 detalla los aciertos y errores del mejor modelo multiclase. Las filas son las categorías reales y las columnas las predichas; la codificación es 0 = graduado, 1 = desertor y 2 = en curso. El modelo identifica correctamente el 91,9 % de los graduados (4.356 de 4.741) y el 81,6 % de los desertores (2.698 de 3.306), pero el 59,5 % de los estudiantes en curso (1.163 de 1.953). Entre estos últimos, el 28,8 % se clasifica como graduado. Por tanto, existe una dificultad relativa para reconocer la categoría en curso, pero estos resultados no justifican combinarla con graduados: son estados académicos distintos y la matriz evidencia errores de clasificación, no equivalencia entre las categorías.
 
 Tabla 6. *Matriz de confusión del mejor modelo seleccionado (Gradient Boosting)*
 
@@ -152,38 +151,38 @@ Tabla 6. *Matriz de confusión del mejor modelo seleccionado (Gradient Boosting)
 | **Real: Clase 2** | 562 | 228 | **1.163** | 1.953 |
 | **Total Predicho** | 5.159 | 2.988 | 1.853 | 10.000 |
 
-<small>Matriz de confusión correspondiente al modelo con mejor rendimiento global (Gradient Boosting) evaluado en el conjunto de prueba ($N = 10.000$). Los valores en la diagonal principal (en negrita) representan las clasificaciones correctas (Verdaderos Positivos por clase), mientras que las celdas fuera de la diagonal corresponden a las desviaciones o errores de clasificación entre las categorías predichas y reales.</small>
+<small>Matriz de confusión de Gradient Boosting en el conjunto de prueba ($N = 10.000$). Filas = clase real; columnas = clase predicha; la diagonal contiene los aciertos y las restantes celdas, los errores.</small>
 
-#### Clasificación binaria
+### Clasificación binaria
 
-A continuación, entrenamos un modelo binaria para diferentes hiperparámetros para cada modelo señalados en la Tabla 7, usando la mayoría de las variables númericas y categoricas. Al igual que en el caso anterior se usó validación cruzada con 5 splits. Podemos ver que el modelo con mejor performance fue Gradient Boosting obteniendo un f1-score de 0.940367. Pudieramos usar este modelo para hacer predicciones y el modelo de regresión logística para entender o tener mejor interpretabilidad del modelo.
+En la tarea binaria se conservaron 40.236 registros (graduados y desertores) y se compararon los modelos de la Tabla 7. Gradient Boosting alcanzó el F1-macro más alto (0,940), seguido muy de cerca por SVM (0,940) y regresión logística (0,938); el ensamble *Voting (soft)* obtuvo 0,939 y K-NN, 0,914. La diferencia entre Gradient Boosting y SVM es mínima al nivel de redondeo presentado, y el ensamble no superó a los modelos individuales. Como análisis complementario, se utiliza una regresión logística con un conjunto reducido de variables para facilitar la interpretación; esta no es la misma configuración del modelo comparativo de mejor puntuación.
 
 Tabla 7. *Resumen de optimización de hiperparámetros y F1-score por modelo de clasificación*
 
 | Modelo | Hiperparámetros y rangos evaluados | Valores finales | F1-score |
 | :--- | :--- | :--- | :---: |
-| **Logistic Regression** | `penalty`: ["l1", "l2", "elasticnet"]<br>`C`: [0.001, 0.01, 0.1, 1, 10, 100]<br>`l1_ratio`: [0.1, 0.5, 0.9] *(para elasticnet)* | `penalty`: 'l1'<br>`C`: 1 | 0,938325 |
-| **SVM** | `C`: [0.1, 1, 10, 100] | `C`: 100 | 0,940253 |
-| **KNN** | `n_neighbors`: [3, 5, 7, 9, 11, 13, 15] | `n_neighbors`: 13 | 0,914212 |
-| **Random Forest** | `n_estimators`: [100, 200, 400]<br>`max_depth`: [None, 5, 10, 20]<br>`min_samples_split`: [2, 5, 10]<br>`min_samples_leaf`: [1, 2, 4]<br>`max_features`: ["sqrt", "log2"] | `n_estimators`: 400<br>`max_depth`: 20<br>`min_samples_split`: 5<br>`min_samples_leaf`: 1<br>`max_features`: 'sqrt' | 0,938120 |
-| **Decision Tree** | `max_depth`: [None, 3, 5, 10, 20]<br>`min_samples_split`: [2, 5, 10]<br>`min_samples_leaf`: [1, 2, 4]<br>`criterion`: ["gini", "entropy"] | `max_depth`: 5<br>`min_samples_leaf`: 2<br>`min_samples_split`: 2<br>`criterion`: 'gini' | 0,933779 |
-| **Gradient Boosting** | `n_estimators`: [100, 200]<br>`learning_rate`: [0.01, 0.1, 0.2]<br>`max_depth`: [2, 3, 5]<br>`subsample`: [0.8, 1.0] | `n_estimators`: 200<br>`learning_rate`: 0.1<br>`max_depth`: 3<br>`subsample`: 0.8 | 0,940367 |
+| **Regresión logística** | `penalty`: ["l1", "l2", "elasticnet"]<br>`C`: [0.001, 0.01, 0.1, 1, 10, 100]<br>`l1_ratio`: [0.1, 0.5, 0.9] *(para elasticnet)* | `penalty`: 'l1'<br>`C`: 1 | 0,9383 |
+| **SVM** | `C`: [0.1, 1, 10, 100] | `C`: 100 | 0,9403 |
+| **K-NN** | `n_neighbors`: [3, 5, 7, 9, 11, 13, 15] | `n_neighbors`: 13 | 0,9142 |
+| **Random Forest** | `n_estimators`: [100, 200, 400]<br>`max_depth`: [None, 5, 10, 20]<br>`min_samples_split`: [2, 5, 10]<br>`min_samples_leaf`: [1, 2, 4]<br>`max_features`: ["sqrt", "log2"] | `n_estimators`: 400<br>`max_depth`: 20<br>`min_samples_split`: 5<br>`min_samples_leaf`: 1<br>`max_features`: 'sqrt' | 0,9381 |
+| **Árbol de decisión** | `max_depth`: [None, 3, 5, 10, 20]<br>`min_samples_split`: [2, 5, 10]<br>`min_samples_leaf`: [1, 2, 4]<br>`criterion`: ["gini", "entropy"] | `max_depth`: 5<br>`min_samples_leaf`: 2<br>`min_samples_split`: 2<br>`criterion`: 'gini' | 0,9338 |
+| **Gradient Boosting** | `n_estimators`: [100, 200]<br>`learning_rate`: [0.01, 0.1, 0.2]<br>`max_depth`: [2, 3, 5]<br>`subsample`: [0.8, 1.0] | `n_estimators`: 200<br>`learning_rate`: 0.1<br>`max_depth`: 3<br>`subsample`: 0.8 | 0,9404 |
+| **Voting (soft)** | Combinación de regresión logística, SVM y Random Forest | `voting`: 'soft' | 0,9394 |
 
-<small>Resumen de hiperparámetros evaluados y valores óptimos seleccionados mediante GridSearchCV con StratifiedKFold (5 splits) y métrica F1-macro obtenida en la evaluación final. SVM = Support Vector Machine; KNN = K-Nearest Neighbors; F1-score = Promedio macro de la métrica F1-score (F1-Macro).</small>
+<small>Hiperparámetros seleccionados mediante GridSearchCV con validación cruzada estratificada de cinco pliegues; F1-macro calculado en el conjunto de prueba y redondeado a cuatro decimales. Voting (soft) combina las probabilidades de regresión logística, SVM y Random Forest; SVM = máquina de soporte vectorial; K-NN = vecinos más cercanos.</small>
 
-Ahora vamos a entrenar un nuevo modelo logístico binario donde las variables no esten correlacionadas. Observando de nuevo el gráfico de correlación vimos que las variables de uc aprobadas, inscritas y las notas durantes los dos primeros semestres estan bastante correlacionadas, asi que vamos a juntarlas en una sola variable llamada indice_rendimiento_academico donde consideramos el ratio de materias aprobadas vs incritas y las notas promedios luego de normalizar estas variables. Ahora vemos que ya no hay correlación fuerte entre las variables.
+Para el análisis logístico explicativo se seleccionó un conjunto reducido de predictores. El promedio de notas y la razón entre unidades aprobadas e inscritas se estandarizaron usando la media y el desvío calculados solo sobre entrenamiento; luego se promediaron para formar `indice_rendimiento_academico`, y se retiraron del modelo las dos variables originales. La Figura 3 muestra que, en este conjunto final, las correlaciones absolutas entre los predictores son moderadas (la mayor se aproxima a 0,4), en contraste con algunos pares de variables académicas de la Figura 1. Esto reduce la redundancia lineal observada, aunque no demuestra independencia entre las variables.
 
-Figura 2. *Correlación sobre variables finales seleccionadas*.
-![Correlación Variables Seleccionadas](../images/corr_variables_seleccionadas.png)
-<small>[COMPLEMENTAR].</small>
+![Agrupamiento y correlación de las variables del modelo explicativo](../images/corr_variables_seleccionadas.png)
+Figura 3. *Agrupamiento jerárquico y matriz de correlación de Spearman de las variables seleccionadas.* El índice de rendimiento combina las variables académicas estandarizadas; no equivale a una medida de efecto causal.
 
-Al compara el performance f1-score respecto a la versión anterior con todas la variables podemos notar que es del 0.94%, lo cual no significa una gran diferencia con la versión anterior donde teníamos todas las variables.
+En el conjunto de prueba, la regresión logística explicativa obtiene un F1-macro cercano a 0,94, comparable al de la versión con más variables (Tabla 7). La similitud del resultado sugiere que el conjunto reducido conserva gran parte de la capacidad predictiva medida por F1-macro, aunque la comparación no demuestra que el índice sea la única fuente de información redundante ni que el modelo simplificado sea superior.
 
-## Resultados
+### Modelo logístico explicativo
 
-### Parámetros de los coeficientes del modelo
+#### Coeficientes del modelo
 
-En la tabla 8, podemos ver que [COMPLEMENTAR HACIENDO UN BREVE ANALISIS]
+La Tabla 8 presenta los coeficientes estimados mediante regresión logística sobre el conjunto de entrenamiento de la tarea binaria. El resultado del modelo se codificó como 1 para deserción, de modo que un coeficiente positivo se asocia con mayores log-odds de deserción y uno negativo con menores log-odds, manteniendo constantes los demás predictores. El índice de rendimiento académico tiene un coeficiente negativo grande (-3,330), mientras que la morosidad presenta un coeficiente positivo (3,469); ambos son estadísticamente distintos de cero según sus intervalos de confianza. También aparecen asociaciones positivas con el promedio de evaluaciones, la edad y el indicador masculino, y negativas con la condición de becario, el puntaje de ingreso y los ingresos familiares. Los coeficientes de las categorías se interpretan respecto de sus categorías de referencia, que no se muestran en la tabla. Estas estimaciones describen asociaciones condicionales en la muestra y no efectos causales.
 
 Tabla 8. *Resultados de la regresión logística (Logit)*
 
@@ -196,61 +195,54 @@ Tabla 8. *Resultados de la regresión logística (Logit)*
 | **Estado civil: Otro** | 0,353 | 0,212 | 1,668 | 0,095 | -0,062 | 0,768 |
 | **Estado civil: Soltero** | 0,417 | 0,122 | 3,420 | 0,001 | 0,178 | 0,656 |
 | **Carrera: Ciencias agropecuarias y veterinarias** | -0,242 | 0,082 | -2,937 | 0,003 | -0,403 | -0,080 |
-| **Carrera: Ciencias sociales** | -0,343 | 0,072 | -4,767 | 0,000 | -0,485 | -0,202 |
-| **Carrera: Comunicación, marketing y diseño** | -0,586 | 0,071 | -8,298 | 0,000 | -0,725 | -0,448 |
-| **Carrera: Ingeniería y tecnología** | 1,383 | 0,179 | 7,708 | 0,000 | 1,032 | 1,735 |
-| **Carrera: Salud** | -0,892 | 0,081 | -11,033 | 0,000 | -1,051 | -0,734 |
-| **Puntaje de ingreso** | -0,037 | 0,004 | -8,993 | 0,000 | -0,045 | -0,029 |
-| **Edad de inscripción** | 0,024 | 0,005 | 4,753 | 0,000 | 0,014 | 0,034 |
+| **Carrera: Ciencias sociales** | -0,343 | 0,072 | -4,767 | <0,001 | -0,485 | -0,202 |
+| **Carrera: Comunicación, marketing y diseño** | -0,586 | 0,071 | -8,298 | <0,001 | -0,725 | -0,448 |
+| **Carrera: Ingeniería y tecnología** | 1,383 | 0,179 | 7,708 | <0,001 | 1,032 | 1,735 |
+| **Carrera: Salud** | -0,892 | 0,081 | -11,033 | <0,001 | -1,051 | -0,734 |
+| **Puntaje de ingreso** | -0,037 | 0,004 | -8,993 | <0,001 | -0,045 | -0,029 |
+| **Edad de inscripción** | 0,024 | 0,005 | 4,753 | <0,001 | 0,014 | 0,034 |
 | **Tiene necesidades educativas especiales** | 0,812 | 0,316 | 2,571 | 0,010 | 0,193 | 1,431 |
-| **Es masculino** | 0,513 | 0,054 | 9,449 | 0,000 | 0,406 | 0,619 |
-| **Es moroso** | 3,469 | 0,140 | 24,834 | 0,000 | 3,195 | 3,743 |
-| **Es becado** | -1,353 | 0,067 | -20,127 | 0,000 | -1,485 | -1,221 |
+| **Es masculino** | 0,513 | 0,054 | 9,449 | <0,001 | 0,406 | 0,619 |
+| **Es moroso** | 3,469 | 0,140 | 24,834 | <0,001 | 3,195 | 3,743 |
+| **Es becado** | -1,353 | 0,067 | -20,127 | <0,001 | -1,485 | -1,221 |
 | **Es estudiante internacional** | -0,815 | 0,297 | -2,745 | 0,006 | -1,396 | -0,233 |
-| **Promedio cantidad evaluaciones semestres** | 0,247 | 0,009 | 28,404 | 0,000 | 0,230 | 0,264 |
-| **Ingresos familia nivel** | -0,099 | 0,022 | -4,574 | 0,000 | -0,142 | -0,057 |
-| **Índice rendimiento académico** | -3,330 | 0,044 | -75,125 | 0,000 | -3,417 | -3,243 |
+| **Promedio cantidad evaluaciones semestres** | 0,247 | 0,009 | 28,404 | <0,001 | 0,230 | 0,264 |
+| **Ingresos familia nivel** | -0,099 | 0,022 | -4,574 | <0,001 | -0,142 | -0,057 |
+| **Índice rendimiento académico** | -3,330 | 0,044 | -75,125 | <0,001 | -3,417 | -3,243 |
 
-<small>Resumen del modelo de Regresión Logística ajustado mediante Estimación de Máxima Verosimilitud (MLE). N = 32.188 observaciones; Grados de libertad del modelo = 20; Pseudo $R^2$ = 0,709; Log-Likelihood = -6351,5; LLR p-valor < 0,001. Coeficiente ($\beta$) = Peso estimado en escala log-odds; IC 95% = Intervalo de confianza al 95% para los coeficientes; p-valor < 0,05 indica significancia estadística.</small>
+<small>Modelo Logit estimado por máxima verosimilitud con el conjunto de entrenamiento ($N = 32.188$); grados de libertad = 20; pseudo-$R^2$ = 0,709; log-verosimilitud = -6.351,5; prueba de razón de verosimilitud, $p < 0,001$. $\beta$ = coeficiente en escala log-odds; IC 95 % = intervalo de confianza al 95 %. Para las variables categóricas, los coeficientes se comparan con la categoría de referencia omitida durante la codificación.</small>
 
-### Curvas de complejidad e importancia de atributos
+#### Curva de complejidad y análisis de importancia
 
-En la Figura 3, mostramos la curva de complejidad del modelo de regresión logistica para el hiperparámetro C para un modelo Lasso (L1). Este gráfico compara el f1-score en el dataset de entrenamiento y test para diferentes valores del hiperparámetro. Se puede apreciar que la precisión para ambos dataset se hacen estable alrededor de un f1-score del 0.92 a partir de un valor de C igual a 0.1. Esto tambien nos indica que el modelo no tiene problema de overfitting.
+La Figura 4 muestra la curva de complejidad de la regresión logística con regularización L1. El eje horizontal presenta $C$, inverso de la fuerza de regularización: a menor $C$, mayor penalización. El F1-macro de entrenamiento y prueba crece con rapidez en los valores más pequeños de $C$ y se estabiliza alrededor de 0,92–0,93 desde aproximadamente $C=0,01$; las curvas permanecen próximas en el rango mostrado. Esto no presenta una brecha evidente entre entrenamiento y prueba, aunque no basta para descartar sobreajuste: la curva usa el conjunto de prueba para varios valores de $C$ y debe interpretarse como exploratoria, no como una validación independiente.
 
-Figura 3. *Curva de complejidad del modelo de Regresión Logística (Lasso)*.
-![Curvas Complejidad](../images/curvas_complejidad_rl_lasso.png)
-<small>Descripción: desempeño en entrenamiento y prueba en función del hiperparámetro C.</small>
+![Curva de complejidad de la regresión logística con regularización L1](../images/curvas_complejidad_rl_lasso.png)
+Figura 4. *F1-macro en entrenamiento y prueba para distintos valores de $C$.* Un valor menor de $C$ implica una regularización más intensa.
 
+La Figura 5 muestra la trayectoria de los coeficientes del modelo Lasso al variar $C$. Al aumentar $C$ y disminuir la regularización, los coeficientes se alejan de cero y luego se estabilizan. Este gráfico muestra cómo cambia el ajuste de los coeficientes, pero no debe confundirse con una medida directa de importancia ni con la curva de desempeño de la Figura 4.
 
-En la Figura 4, presentamos el gráfico de Permutation Feature Importance. Lo que hace esta técnica es evaluar la importancia de cada variable desordenando (permutando) sus valores de forma aleatoria en el conjunto de prueba y midiendo cuánto cae el rendimiento del modelo. Cuanto mayor sea la caída en la métrica (f1-score), más relevante es esa variable para las predicciones del modelo.
+![Evolución de los coeficientes de la regresión logística con regularización L1](../images/coeficientes_por_regularizacion.png)
+Figura 5. *Trayectoria de los coeficientes para distintos valores de $C$.* La línea horizontal discontinua marca el valor cero.
 
-Figura 4. *Evolución de los coeficientes del modelo de Regresión Logística (Lasso)*.
-![Coeficientes por regularización](../images/coeficientes_por_regularizacion.png)
-<small>Descripción: Impacto de diferentes grados de regularización del hiperparámetro C.</small>
+La importancia por permutación de la Figura 6 se calculó midiendo la disminución del F1-macro al permutar cada variable. En el conjunto de prueba, el índice de rendimiento académico presenta la mayor disminución (aproximadamente 0,31), seguido por la morosidad (alrededor de 0,05) y el promedio de evaluaciones (cerca de 0,01). Las demás variables muestran cambios pequeños en esta métrica. La consistencia del patrón entre entrenamiento y prueba respalda que estas variables son informativas para este modelo, pero no establece que causen la deserción.
 
-
-De acuerdo a esta técnica, las variables más importantes son el indice de rendimiento académico, si el estudiante es moroso y la cantidad de evaluaciones promedio en los primeros dos semestres. El impacto en el f1-score es de 0.32, 0.05 y 0.01, respectivamente. Tambien, podemos ver como otras variables como el sexo, la edad, puntaje de ingreso e ingreso familiar tiene un impacto muy bajo en esta métrica.
-
-Figura 5. *Variables más influyentes para la predicción de la Deserción estudiantil*
-![Feature Importance](../images/permutation_feature_importance.png)
-<small>Descripción: importancia de las variables mediante el método de Permutation Feature Importance. La importancia se interpreta como capacidad predictiva y no como efecto causal..</small>
+![Importancia de las variables por permutación en entrenamiento y prueba](../images/permutation_feature_importance.png)
+Figura 6. *Disminución del F1-macro tras permutar cada predictor.* Los paneles corresponden a entrenamiento y prueba; una disminución mayor indica mayor contribución predictiva en este modelo, no un efecto causal.
 
 
 ## Discusión
 
-[COMPLEMENTAR]
-Los resultados principales indican que **[completar modelo y F1-score]** fue el modelo con mejor desempeño para **[tarea]**. La variable o grupo de variables más informativo fue **[completar]**, lo que permite responder parcialmente la pregunta planteada en la introducción. La elección se fundamenta en el mayor F1-score, ya que esta métrica exige un equilibrio entre detectar correctamente los casos relevantes y evitar predicciones positivas incorrectas.
+En respuesta a la pregunta del estudio, el mejor resultado fue de Gradient Boosting: F1-macro de 0,783 en la clasificación multiclase y de 0,940 en la binaria (Tablas 5 y 7). La matriz de confusión (Tabla 6) muestra un rendimiento desigual: el modelo identifica mejor a graduados y desertores que a estudiantes en curso. En la tarea binaria, SVM obtuvo un resultado casi idéntico al de Gradient Boosting, por lo que no se observa una ventaja práctica clara entre ambos. En el modelo logístico explicativo, la importancia por permutación (Figura 6) y los coeficientes (Tabla 8) destacan el índice de rendimiento académico y la morosidad.
 
-La relevancia observada del desempeño académico temprano, la situación económica o administrativa y las características de admisión debe discutirse en relación con los modelos de permanencia de Tinto (1975, 1993), Bean (1980) y Bean y Metzner (1985), así como con la evidencia sintetizada por Yorke y Longden (2004) y OECD (2019). Indicar si los hallazgos coinciden con esa literatura o si aparecen diferencias atribuibles al contexto, la cohorte o la composición de la muestra.
+El aporte principal es identificar, para esta muestra concreta, qué señales del primer año permiten distinguir mejor los estados académicos. La importancia del rendimiento es compatible con los enfoques de integración académica de Tinto (1975, 1993); a su vez, las asociaciones de morosidad y becas concuerdan con modelos que consideran factores individuales y contextuales (Bean, 1980; Bean y Metzner, 1985; Yorke y Longden, 2004). El buen desempeño binario podría deberse a que las variables académicas de ambos semestres resumen el progreso alcanzado al cierre del año, pero por esa misma razón el resultado no demuestra que sea posible anticipar la deserción al momento de la inscripción. La superposición entre grupos y los errores de la Tabla 6 confirman que las categorías no se explican solo mediante las variables numéricas seleccionadas.
 
-Comparar el desempeño de los modelos y explicar las diferencias en términos de complejidad, supuestos, sensibilidad al desbalance y capacidad de generalización. Discutir las aplicaciones prácticas de un sistema de alerta temprana, aclarando que un puntaje predictivo debería orientar intervenciones de acompañamiento y no utilizarse como criterio automático de exclusión.
+En términos prácticos, estos modelos podrían servir como apoyo para orientar el contacto y el acompañamiento de estudiantes al cierre del primer año, no para etiquetarlos ni restringir oportunidades. La tarea binaria solo distingue graduados y desertores y excluye a quienes continúan en curso; por ello, no predice la situación de esa categoría.
 
-Finalmente, señalar las limitaciones: **[completar según el análisis]**. Considerar la naturaleza observacional de los datos, la posible falta de variables institucionales o socioeconómicas, el hecho de que asociación no implica causalidad, la calidad y representatividad de la muestra, y la ausencia de validación externa o temporal si corresponde.
+Los resultados tienen varias limitaciones. El conjunto es observacional y su proceso de selección y representatividad no está documentado; pueden faltar factores institucionales, personales y socioeconómicos relevantes, y no se realizó validación externa ni temporal. En este informe no se presentan métricas complementarias como precisión, *recall* o AUC, que ayudarían a valorar distintos costos de error. La escala original de las variables numéricas se conservó en los modelos comparativos, lo que puede afectar especialmente a SVM, K-NN y modelos regularizados; además, la curva de complejidad utiliza repetidamente el conjunto de prueba. Finalmente, la importancia y los coeficientes se estimaron en un modelo logístico reducido y no deben confundirse con explicaciones causales ni atribuirse directamente al modelo Gradient Boosting de mejor F1.
 
 ## Conclusión
 
-[COMPLEMENTAR]
-En base a los resultados obtenidos, **[modelo seleccionado]**, con un F1-score de **[completar]**, permite resolver **[confiable/moderadamente/limitadamente]** la tarea de **[clasificación binaria o multiclase]** a partir de las variables disponibles. Los predictores más informativos fueron **[completar]**. El F1-score fue elegido porque ofrece un criterio equilibrado frente al desbalance de clases y evita seleccionar un modelo que funcione bien sólo para la clase mayoritaria. Estos resultados sugieren que **[implicancia principal]**, aunque su aplicación debe considerar las limitaciones del conjunto de datos y utilizarse como apoyo para intervenciones educativas, no como sustituto del análisis institucional o del acompañamiento individual.
+En función de los resultados, Gradient Boosting fue el modelo con mayor F1-macro tanto en la clasificación multiclase (0,783) como en la binaria (0,940). En el modelo logístico explicativo, el índice de rendimiento académico y la morosidad fueron los predictores con mayor contribución a la clasificación, seguidos por el promedio de evaluaciones. En conjunto, los hallazgos indican que la información académica del primer año permite distinguir graduados y desertores con un F1-macro alto dentro de esta muestra, pero la categoría en curso es más difícil de identificar. La evidencia es prometedora como apoyo para orientar acciones de acompañamiento, aunque se requieren validación externa, métricas complementarias y controles metodológicos adicionales antes de cualquier implementación institucional.
 
 ## Bibliografía
 
