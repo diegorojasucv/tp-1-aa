@@ -87,9 +87,18 @@ Tabla 3. *Distribución de frecuencias de la variable objetivo (target) ($N = 50
 
 Antes de hacer el entrenamiento de los modelos vamos a incluir un análisis exploratorio que hicimos en el conjunto de datos.
 
-El en Gráfico 1 podemos ver que todas las variables que involucran unidades curriculares (inscritas y aprobadas) y notas estan bastante correlacionadas entre ellas, con coeficientes entre 0.8 y 0.9. Por otra parte, las variables que indican si un estudiante es moroso o presenta deuda tambien presentan una relación no tan fuerte (-0.5). Cuando creemos más adelante el modelo explicativo es importante excluir aquellas variables que esten correlacionadas para evitar sesgar el feature importance. Podemos apreciar que generalmente la mediana y la apertura de las cajas en mucho mas parecida en las categorías "En Curso" y "Graduado" en comparación a la categoría "Desertor". Es muy probable que cuando entrenemos el modelo multiclase le cueste separar estas dos categorías parecidas. 
+El en Figura 1 podemos ver que todas las variables que involucran unidades curriculares (inscritas y aprobadas) y notas estan bastante correlacionadas entre ellas, con coeficientes entre 0.8 y 0.9. Por otra parte, las variables que indican si un estudiante es moroso o presenta deuda tambien presentan una relación no tan fuerte (-0.5). Cuando creemos más adelante el modelo explicativo es importante excluir aquellas variables que esten correlacionadas para evitar sesgar el feature importance.
 
-![Matriz de correlación](../images/corr.png)
+Figura 1. *Matriz de Correlación de todas las variables númericas*.
+![Matriz de correlación](../images/corr_todas_variables.png)
+<small>[COMPLEMENTAR]</small>
+
+
+En el Figura 2 podemos ver la distribuciones de algunas variables númericas con la variable target en el eje x. Podemos apreciar que generalmente la mediana y la apertura de las cajas en mucho mas parecida en las categorías "En Curso" y "Graduado" en comparación a la categoría "Desertor". Es muy probable que cuando entrenemos el modelo multiclase le cueste separar estas dos categorías parecidas. 
+
+Figura 2. *Boxplot para las principales variables numericas por el target*.
+![Boxplot](../images/boxplot.png)
+<small>[COMPLEMENTAR].</small>
 
 En la Tabla 4 tenemos el Informatio Value (IV) de las variables númericas y categoricas usando la variable target. Esta métrica mide la capacidad explicativa de una variable independiente para separar o predecir una clase binaria ("Graduado"/"Desertado"). Permite cuantificar la fuerza predictiva de cada variable y seleccionar las mejores características antes de entrenar un modelo. El top cinco de las varibales con más "poder" predictivo son: i) el ratio de materias aprobadas e inscritas, ii) el promedio de las notas en el primer y segundo semestre, iii) el promedio de la cantidad de evaluaciones en el primer y segundo semestre, iv) si es moroso y v) si es becado.
 
@@ -122,13 +131,13 @@ Tabla 5. *Resultados del ajuste de hiperparámetros y evaluación de modelos de 
 
 | Modelo | Estrategia multiclase | Hiperparámetros y rangos evaluados | Valores finales | F1-score |
 | :--- | :--- | :--- | :--- | :---: |
-| **Regresión Logística (One-vs-Rest)** | One-vs-Rest (OvR) | `penalty`: ["l1", "l2", "elasticnet"]<br>`C`: [0.001, 0.01, 0.1, 1, 10, 100]<br>`l1_ratio`: [0.1, 0.5, 0.9] *(para elasticnet)* | **Completar** | 0,761329 |
-| **Regresión Logística (One-vs-One)** | One-vs-One (OvO) | `penalty`: ["l1", "l2", "elasticnet"]<br>`C`: [0.001, 0.01, 0.1, 1, 10, 100]<br>`l1_ratio`: [0.1, 0.5, 0.9] *(para elasticnet)* | **Completar** | 0,772528 |
-| **SVM** *(SVC)* | One-vs-One (OvO nativo) | `C`: [0.1, 1, 10, 100] | **Completar** | 0,773364 |
-| **K-NN** | Directa (Multiclase nativa) | `n_neighbors`: [3, 5, 7, 9, 11, 13, 15] | **Completar** | 0,731838 |
-| **Bagging / Random Forest** | Directa (Multiclase nativa) | `n_estimators`: [100, 200, 400]<br>`max_depth`: [None, 5, 10, 20]<br>`min_samples_split`: [2, 5, 10]<br>`min_samples_leaf`: [1, 2, 4]<br>`max_features`: ["sqrt", "log2"] | **Completar** | 0,776809 |
-| **Árbol de decisión** | Directa (Multiclase nativa) | `criterion`: ["gini", "entropy"]<br>`max_depth`: [None, 3, 5, 10, 20]<br>`min_samples_split`: [2, 5, 10]<br>`min_samples_leaf`: [1, 2, 4] | **Completar** | 0,768979 |
-| **Boosting** *(AdaBoost)* | Directa (Multiclase nativa) | `n_estimators`: [100, 200]<br>`learning_rate`: [0.01, 0.1, 0.2]<br>`max_depth`: [2, 3, 5]<br>`subsample`: [0.8, 1.0] | **Completar** | 0,782822 |
+| **Regresión Logística (One-vs-Rest)** | One-vs-Rest (OvR) | `penalty`: ["l1", "l2", "elasticnet"]<br>`C`: [0.001, 0.01, 0.1, 1, 10, 100]<br>`l1_ratio`: [0.1, 0.5, 0.9] *(para elasticnet)* | `penalty`: 'elasticnet'<br>`C`: 1<br>`l1_ratio`: 0.9 | 0,761329 |
+| **Regresión Logística (One-vs-One)** | One-vs-One (OvO) | `penalty`: ["l1", "l2", "elasticnet"]<br>`C`: [0.001, 0.01, 0.1, 1, 10, 100]<br>`l1_ratio`: [0.1, 0.5, 0.9] *(para elasticnet)* | `penalty`: 'l1'<br>`C`: 10 | 0,772528 |
+| **SVM** *(SVC)* | One-vs-One (OvO nativo) | `C`: [0.1, 1, 10, 100] | `C`: 100 | 0,773364 |
+| **K-NN** | Directa (Multiclase nativa) | `n_neighbors`: [3, 5, 7, 9, 11, 13, 15] | `n_neighbors`: 15 | 0,731838 |
+| **Bagging / Random Forest** | Directa (Multiclase nativa) | `n_estimators`: [100, 200, 400]<br>`max_depth`: [None, 5, 10, 20]<br>`min_samples_split`: [2, 5, 10]<br>`min_samples_leaf`: [1, 2, 4]<br>`max_features`: ["sqrt", "log2"] | `n_estimators`: 200<br>`max_depth`: 20<br>`min_samples_split`: 10<br>`min_samples_leaf`: 1<br>`max_features`: 'sqrt' | 0,776809 |
+| **Árbol de decisión** | Directa (Multiclase nativa) | `criterion`: ["gini", "entropy"]<br>`max_depth`: [None, 3, 5, 10, 20]<br>`min_samples_split`: [2, 5, 10]<br>`min_samples_leaf`: [1, 2, 4] | `criterion`: 'gini'<br>`max_depth`: 5<br>`min_samples_leaf`: 4<br>`min_samples_split`: 2 | 0,768979 |
+| **Boosting** *(Gradient Boosting)* | Directa (Multiclase nativa) | `n_estimators`: [100, 200]<br>`learning_rate`: [0.01, 0.1, 0.2]<br>`max_depth`: [2, 3, 5]<br>`subsample`: [0.8, 1.0] | `n_estimators`: 100<br>`learning_rate`: 0.1<br>`max_depth`: 5<br>`subsample`: 0.8 | 0,782822 |
 
 <small>Resumen de configuraciones, estrategias multiclase e hiperparámetros optimizados mediante búsqueda en rejilla (GridSearchCV) con validación cruzada estratificada de 5 pliegues (StratifiedKFold, 5 splits). SVM = Support Vector Machine; K-NN = K-Nearest Neighbors; OvR = One-vs-Rest; OvO = One-vs-One; F1-score = Métrica de evaluación macro (f1_macro) obtenida en el conjunto de prueba.</small>
 
@@ -153,19 +162,22 @@ Tabla 7. *Resumen de optimización de hiperparámetros y F1-score por modelo de 
 
 | Modelo | Hiperparámetros y rangos evaluados | Valores finales | F1-score |
 | :--- | :--- | :--- | :---: |
-| **Logistic Regression** | `penalty`: ["l1", "l2", "elasticnet"]<br>`C`: [0.001, 0.01, 0.1, 1, 10, 100]<br>`l1_ratio`: [0.1, 0.5, 0.9] *(para elasticnet)* | **Completar** | 0.938325 |
-| **SVM** | `C`: [0.1, 1, 10, 100] | **Completar** | 0.940253 |
-| **KNN** | `n_neighbors`: [3, 5, 7, 9, 11, 13, 15] | **Completar** | 0.914212 |
-| **Random Forest** | `n_estimators`: [100, 200, 400]<br>`max_depth`: [None, 5, 10, 20]<br>`min_samples_split`: [2, 5, 10]<br>`min_samples_leaf`: [1, 2, 4]<br>`max_features`: ["sqrt", "log2"] | **Completar** | 0.938120 |
-| **Decision Tree** | `max_depth`: [None, 3, 5, 10, 20]<br>`min_samples_split`: [2, 5, 10]<br>`min_samples_leaf`: [1, 2, 4]<br>`criterion`: ["gini", "entropy"] | **Completar** | 0.933779 |
-| **Gradient Boosting** | `n_estimators`: [100, 200]<br>`learning_rate`: [0.01, 0.1, 0.2]<br>`max_depth`: [2, 3, 5]<br>`subsample`: [0.8, 1.0] | **Completar** | 0.940367 |
+| **Logistic Regression** | `penalty`: ["l1", "l2", "elasticnet"]<br>`C`: [0.001, 0.01, 0.1, 1, 10, 100]<br>`l1_ratio`: [0.1, 0.5, 0.9] *(para elasticnet)* | `penalty`: 'l1'<br>`C`: 1 | 0,938325 |
+| **SVM** | `C`: [0.1, 1, 10, 100] | `C`: 100 | 0,940253 |
+| **KNN** | `n_neighbors`: [3, 5, 7, 9, 11, 13, 15] | `n_neighbors`: 13 | 0,914212 |
+| **Random Forest** | `n_estimators`: [100, 200, 400]<br>`max_depth`: [None, 5, 10, 20]<br>`min_samples_split`: [2, 5, 10]<br>`min_samples_leaf`: [1, 2, 4]<br>`max_features`: ["sqrt", "log2"] | `n_estimators`: 400<br>`max_depth`: 20<br>`min_samples_split`: 5<br>`min_samples_leaf`: 1<br>`max_features`: 'sqrt' | 0,938120 |
+| **Decision Tree** | `max_depth`: [None, 3, 5, 10, 20]<br>`min_samples_split`: [2, 5, 10]<br>`min_samples_leaf`: [1, 2, 4]<br>`criterion`: ["gini", "entropy"] | `max_depth`: 5<br>`min_samples_leaf`: 2<br>`min_samples_split`: 2<br>`criterion`: 'gini' | 0,933779 |
+| **Gradient Boosting** | `n_estimators`: [100, 200]<br>`learning_rate`: [0.01, 0.1, 0.2]<br>`max_depth`: [2, 3, 5]<br>`subsample`: [0.8, 1.0] | `n_estimators`: 200<br>`learning_rate`: 0.1<br>`max_depth`: 3<br>`subsample`: 0.8 | 0,940367 |
 
-<small>Resumen de hiperparámetros evaluados mediante GridSearchCV con StratifiedKFold (5 splits) y métrica F1-macro obtenida en la evaluación final. SVM = Support Vector Machine; KNN = K-Nearest Neighbors; F1-score = Promedio macro ponderado de la métrica F1-score expresado a dos decimales.</small>
+<small>Resumen de hiperparámetros evaluados y valores óptimos seleccionados mediante GridSearchCV con StratifiedKFold (5 splits) y métrica F1-macro obtenida en la evaluación final. SVM = Support Vector Machine; KNN = K-Nearest Neighbors; F1-score = Promedio macro de la métrica F1-score (F1-Macro).</small>
 
 Ahora vamos a entrenar un nuevo modelo logístico binario donde las variables no esten correlacionadas. Observando de nuevo el gráfico de correlación vimos que las variables de uc aprobadas, inscritas y las notas durantes los dos primeros semestres estan bastante correlacionadas, asi que vamos a juntarlas en una sola variable llamada indice_rendimiento_academico donde consideramos el ratio de materias aprobadas vs incritas y las notas promedios luego de normalizar estas variables. Ahora vemos que ya no hay correlación fuerte entre las variables.
 
-Al compara el performance f1-score respecto a la versión anterior con todas la variables podemos notar que es del 0.94%, lo cual no significa una gran diferencia con la versión anterior donde teníamos todas las variables.
+Figura 2. *Correlación sobre variables finales seleccionadas*.
+![Correlación Variables Seleccionadas](../images/corr_variables_seleccionadas.png)
+<small>[COMPLEMENTAR].</small>
 
+Al compara el performance f1-score respecto a la versión anterior con todas la variables podemos notar que es del 0.94%, lo cual no significa una gran diferencia con la versión anterior donde teníamos todas las variables.
 
 ## Resultados
 
@@ -206,23 +218,21 @@ Tabla 8. *Resultados de la regresión logística (Logit)*
 En la Figura 3, mostramos la curva de complejidad del modelo de regresión logistica para el hiperparámetro C para un modelo Lasso (L1). Este gráfico compara el f1-score en el dataset de entrenamiento y test para diferentes valores del hiperparámetro. Se puede apreciar que la precisión para ambos dataset se hacen estable alrededor de un f1-score del 0.92 a partir de un valor de C igual a 0.1. Esto tambien nos indica que el modelo no tiene problema de overfitting.
 
 Figura 3. *Curva de complejidad del modelo de Regresión Logística (Lasso)*.
-
-
-
+![Curvas Complejidad](../images/curvas_complejidad_rl_lasso.png)
 <small>Descripción: desempeño en entrenamiento y prueba en función del hiperparámetro C.</small>
 
 
+En la Figura 4, presentamos el gráfico de Permutation Feature Importance. Lo que hace esta técnica es evaluar la importancia de cada variable desordenando (permutando) sus valores de forma aleatoria en el conjunto de prueba y midiendo cuánto cae el rendimiento del modelo. Cuanto mayor sea la caída en la métrica (f1-score), más relevante es esa variable para las predicciones del modelo.
+
 Figura 4. *Evolución de los coeficientes del modelo de Regresión Logística (Lasso)*.
-
-
+![Coeficientes por regularización](../images/coeficientes_por_regularizacion.png)
 <small>Descripción: Impacto de diferentes grados de regularización del hiperparámetro C.</small>
 
-En la Figura 4, presentamos el gráfico de Permutation Feature Importance. Lo que hace esta técnica es evaluar la importancia de cada variable desordenando (permutando) sus valores de forma aleatoria en el conjunto de prueba y midiendo cuánto cae el rendimiento del modelo. Cuanto mayor sea la caída en la métrica (f1-score), más relevante es esa variable para las predicciones del modelo.
 
 De acuerdo a esta técnica, las variables más importantes son el indice de rendimiento académico, si el estudiante es moroso y la cantidad de evaluaciones promedio en los primeros dos semestres. El impacto en el f1-score es de 0.32, 0.05 y 0.01, respectivamente. Tambien, podemos ver como otras variables como el sexo, la edad, puntaje de ingreso e ingreso familiar tiene un impacto muy bajo en esta métrica.
 
-Figura 4. *Variables más influyentes para la predicción de la Deserción estudiantil*
-
+Figura 5. *Variables más influyentes para la predicción de la Deserción estudiantil*
+![Feature Importance](../images/permutation_feature_importance.png)
 <small>Descripción: importancia de las variables mediante el método de Permutation Feature Importance. La importancia se interpreta como capacidad predictiva y no como efecto causal..</small>
 
 
@@ -239,6 +249,7 @@ Finalmente, señalar las limitaciones: **[completar según el análisis]**. Cons
 
 ## Conclusión
 
+[COMPLEMENTAR]
 En base a los resultados obtenidos, **[modelo seleccionado]**, con un F1-score de **[completar]**, permite resolver **[confiable/moderadamente/limitadamente]** la tarea de **[clasificación binaria o multiclase]** a partir de las variables disponibles. Los predictores más informativos fueron **[completar]**. El F1-score fue elegido porque ofrece un criterio equilibrado frente al desbalance de clases y evita seleccionar un modelo que funcione bien sólo para la clase mayoritaria. Estos resultados sugieren que **[implicancia principal]**, aunque su aplicación debe considerar las limitaciones del conjunto de datos y utilizarse como apoyo para intervenciones educativas, no como sustituto del análisis institucional o del acompañamiento individual.
 
 ## Bibliografía
