@@ -8,38 +8,92 @@
 
 ## Introducción
 
-La deserción universitaria constituye un problema relevante para las instituciones de educación superior porque afecta las trayectorias educativas de los estudiantes y también implica costos académicos, sociales y económicos. En este trabajo se estudia la deserción luego del primer año universitario, con el propósito de identificar los factores asociados con la permanencia, la graduación y el abandono, y de construir una herramienta que permita estimar tempranamente el riesgo de deserción. En particular, se analizará si las características sociodemográficas y de admisión, la situación económica y administrativa, y el desempeño académico temprano permiten distinguir entre estudiantes graduados, desertores y estudiantes que continúan en curso.
+Este trabajo analiza los determinantes más importantes de la deserción universitaria y desarrolla un modelo predictivo para estimar el riesgo de abandono de los estudiantes al finalizar su primer año. Identificar este riesgo y las variables de mayor impacto resulta fundamental para que áreas como Bienestar Estudiantil o Secretaría Académica puedan realizar intervenciones directas e informadas.
 
-La literatura sobre permanencia estudiantil señala que la deserción no suele explicarse por un único factor, sino por la interacción entre características individuales, condiciones institucionales, integración académica y social, y restricciones económicas. El modelo de integración de Tinto (1975, 1993) destaca el papel de la integración académica y social en la persistencia; los modelos de Bean (1980) y Bean y Metzner (1985) incorporan, además, la influencia de factores externos y de las condiciones de los estudiantes no tradicionales. Estudios empíricos también han asociado la deserción con el rendimiento académico inicial, la asistencia, la situación financiera, la edad, la modalidad de ingreso y las características del programa de estudios (Yorke y Longden, 2004; OECD, 2019). Sin embargo, la importancia relativa de estos determinantes puede variar entre instituciones, países y cohortes. Por ello, este análisis busca complementar la evidencia general con una comparación de modelos aplicada al conjunto de datos disponible, identificando qué variables resultan más informativas en este caso y qué capacidad predictiva alcanzan los modelos.
+La literatura teórica (Tinto, 1975, 1993; Bean, 1980) y empírica (Yorke y Longden, 2004; OECD, 2019) muestra que la deserción es un fenómeno multicausal, determinado por la interacción de factores individuales, institucionales, socioeconómicos y de integración académica. Debido a que la relevancia de estas variables varía según el contexto, este estudio busca evaluar qué factores resultan más informativos en el conjunto de datos analizado.
 
-La pregunta principal es: **¿qué variables permiten explicar y predecir mejor la deserción universitaria después del primer año?** Para responderla, primero se realizará un análisis exploratorio de las variables y de la distribución de las tres categorías de la variable de respuesta: estudiantes graduados, desertores y estudiantes en curso. Luego se abordará una tarea multiclase para comparar estos grupos y, en una segunda etapa, una tarea binaria que considere únicamente graduados y desertores, con el objetivo de estimar el riesgo de deserción. Se compararán distintas familias de modelos utilizando exclusivamente el F1-score como métrica de evaluación y criterio de selección, y se analizará la importancia de los atributos. Se plantea como hipótesis que el desempeño académico del primer año, las notas, la situación de matrícula y deuda, la beca, la edad y algunas características de ingreso estarán entre los predictores más relevantes. El resto del informe presenta los materiales y métodos, los resultados, la discusión, las conclusiones y la bibliografía.
+Para responder a la pregunta central **¿qué variables permiten explicar y predecir mejor la deserción universitaria después del primer año?**, se realizará un análisis exploratorio y se estructurará la modelado en dos etapas: una clasificación multiclase (graduados, desertores y en curso) y una binaria (graduados vs. desertores). Evaluando los modelos mediante el *F1-score*, se espera confirmar que el desempeño académico inicial, la situación financiera (deuda y becas), la edad y la modalidad de ingreso se posicionen entre los predictores más determinantes.
 
 ## Materiales y métodos
 
+Usamos la totalidad del dataset universitario (50k lineas). Las variables fueron renombradas usando la metedologia de *lower_snake_case*. Además, muchas variables catégoricas fueron transformadas a booleanas para facilitar su análsis y posterior uso en los algoritmos. Tambien, se crearon nuevas variables númericas realizando promedios o ratios con las variables existentes.
+
 ### i) Datos y variables explicativas (E)
 
-> **Completar con la información documentada en el análisis.** Describir la fuente del conjunto de datos, el período o cohorte representada, el número de observaciones y la cantidad de variables. Indicar los criterios de inclusión y exclusión, los valores faltantes, los posibles errores de medición y los sesgos de selección que puedan afectar la generalización.
+El dataset original contiene 50 mil líneas y 27 variables. Al analizar tanto las variables númericas como categóricas podemos apreciar de que no existen valores nulos en el dataset. Otro punto importante es que para las variables númericas que representan la edad, puntajes, unidades créditicias, etc. no presentan valores negativos, lo cual esta asociado con la lógica esperada. En la tabla 1 y 2 se puede ver con más detalle los principales descriptivos de las principales variables que vamos a usar más adelante.
 
-Las variables explicativas se organizarán en los siguientes grupos:
+Tabla 1. *Resumen descriptivo de las variables númericas del dataset ($N = 50.000$)*
 
-- **Características personales y sociodemográficas:** edad al momento de la inscripción, sexo, estado civil, condición de estudiante internacional y necesidades educativas especiales.
-- **Antecedentes y admisión:** nivel máximo de estudios previo, puntaje del examen de ingreso, modalidad de aplicación, carrera y condición de desplazamiento.
-- **Situación económica y administrativa:** deuda, pago de matrícula al día, posesión de beca, ingresos de los padres y demanda cognitiva de los padres.
-- **Desempeño académico temprano:** unidades inscriptas, cantidad de evaluaciones, unidades aprobadas y nota promedio durante el primer y segundo semestre.
+| Variable | $N$ | Miss | Missing (%) | Zeros | Positivos | Negativos | Min | Max | Mean | $p_{0.01}$ | $p_{0.05}$ | $p_{0.25}$ | $p_{0.50}$ | $p_{0.75}$ | $p_{0.95}$ | $p_{0.99}$ | Std | Coeff of Variation |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **cualificacion_promedio** | 50.000 | 0 | 0,00 % | 0 | 50.000 | 0 | 48,00 | 95,00 | 66,26 | 51,99 | 58,00 | 62,00 | 67,00 | 70,00 | 75,00 | 80,00 | 5,52 | 0,08 |
+| **puntaje_ingreso** | 50.000 | 0 | 0,00 % | 0 | 50.000 | 0 | 48,00 | 95,00 | 62,67 | 49,00 | 52,00 | 59,00 | 62,00 | 66,00 | 75,00 | 80,00 | 6,28 | 0,10 |
+| **edad_inscripcion** | 50.000 | 0 | 0,00 % | 0 | 50.000 | 0 | 17,00 | 70,00 | 22,28 | 18,00 | 18,00 | 18,00 | 19,00 | 23,00 | 38,00 | 49,00 | 6,90 | 0,31 |
+| **es_masculino** | 50.000 | 0 | 0,00 % | 34.240 | 15.760 | 0 | 0,00 | 1,00 | 0,32 | 0,00 | 0,00 | 0,00 | 0,00 | 1,00 | 1,00 | 1,00 | 0,46 | 1,47 |
+| **es_desplazado** | 50.000 | 0 | 0,00 % | 21.452 | 28.548 | 0 | 0,00 | 1,00 | 0,57 | 0,00 | 0,00 | 0,00 | 1,00 | 1,00 | 1,00 | 1,00 | 0,49 | 0,87 |
+| **es_asistencia_diurna** | 50.000 | 0 | 0,00 % | 4.244 | 45.756 | 0 | 0,00 | 1,00 | 0,92 | 0,00 | 0,00 | 1,00 | 1,00 | 1,00 | 1,00 | 1,00 | 0,28 | 0,30 |
+| **es_deudor** | 50.000 | 0 | 0,00 % | 46.424 | 3.576 | 0 | 0,00 | 1,00 | 0,07 | 0,00 | 0,00 | 0,00 | 0,00 | 0,00 | 1,00 | 1,00 | 0,26 | 3,60 |
+| **es_moroso** | 50.000 | 0 | 0,00 % | 5.361 | 44.639 | 0 | 0,00 | 1,00 | 0,89 | 0,00 | 0,00 | 1,00 | 1,00 | 1,00 | 1,00 | 1,00 | 0,31 | 0,35 |
+| **es_becado** | 50.000 | 0 | 0,00 % | 37.622 | 12.378 | 0 | 0,00 | 1,00 | 0,25 | 0,00 | 0,00 | 0,00 | 0,00 | 0,00 | 1,00 | 1,00 | 0,43 | 1,74 |
+| **es_estudiante_internacional** | 50.000 | 0 | 0,00 % | 49.671 | 329 | 0 | 0,00 | 1,00 | 0,01 | 0,00 | 0,00 | 0,00 | 0,00 | 0,00 | 0,00 | 0,00 | 0,08 | 12,29 |
+| **tiene_necesidades_educativas_especiales** | 50.000 | 0 | 0,00 % | 49.808 | 192 | 0 | 0,00 | 1,00 | 0,00 | 0,00 | 0,00 | 0,00 | 0,00 | 0,00 | 0,00 | 0,00 | 0,06 | 16,11 |
+| **promedio_notas_semestres** | 50.000 | 0 | 0,00 % | 10.124 | 39.876 | 0 | 0,00 | 91,00 | 49,12 | 0,00 | 0,00 | 51,00 | 60,50 | 66,00 | 72,50 | 76,00 | 26,22 | 0,53 |
+| **promedio_uc_inscritos_semestres** | 50.000 | 0 | 0,00 % | 1.744 | 48.256 | 0 | 0,00 | 21,00 | 5,92 | 0,00 | 5,00 | 5,00 | 6,00 | 6,00 | 8,00 | 11,50 | 1,64 | 0,28 |
+| **promedio_uc_aprobadas_semestres** | 50.000 | 0 | 0,00 % | 10.127 | 39.873 | 0 | 0,00 | 20,00 | 4,10 | 0,00 | 0,00 | 1,50 | 5,00 | 6,00 | 7,50 | 10,00 | 2,68 | 0,65 |
+| **promedio_cant_evaluaciones_semestres** | 50.000 | 0 | 0,00 % | 5.065 | 44.935 | 0 | 0,00 | 33,00 | 7,32 | 0,00 | 0,00 | 6,00 | 7,50 | 9,00 | 12,50 | 15,50 | 3,32 | 0,45 |
+| **ratio_aprobadas_inscritas** | 50.000 | 0 | 0,00 % | 10.131 | 39.869 | 0 | 0,00 | 1,80 | 0,65 | 0,00 | 0,00 | 0,30 | 0,83 | 1,00 | 1,00 | 1,00 | 0,39 | 0,60 |
+| **ingresos_familia_nivel** | 50.000 | 0 | 0,00 % | 0 | 50.000 | 0 | 1,00 | 5,00 | 2,24 | 1,00 | 1,00 | 1,00 | 2,00 | 3,00 | 4,50 | 5,00 | 1,12 | 0,50 |
+| **demanda_cog_familia_nivel** | 50.000 | 0 | 0,00 % | 0 | 50.000 | 0 | 1,00 | 5,00 | 2,24 | 1,00 | 1,00 | 1,00 | 2,00 | 3,00 | 4,50 | 5,00 | 1,12 | 0,50 |
 
-Describir el balance de clases mediante una tabla y especificar cómo se tratará el eventual desbalance: ponderación de clases, muestreo u otra estrategia. Aclarar qué transformaciones se aplicaron a las variables categóricas y numéricas, y cómo se evitó que información del conjunto de prueba interviniera en el entrenamiento.
+<small>Resumen de estadísticos descriptivos, distribuciones de percentiles y proporciones de valores nulos/ceros para la cohorte analizada. $N$ = Tamaño de la muestra (número total de registros); Miss = Cantidad de datos faltantes; Missing (%) = Porcentaje de datos faltantes; Zeros = Cantidad de valores iguales a cero; Positivos / Negativos = Frecuencia de valores estrictamente mayores o menores a cero; Min / Max = Valor mínimo y máximo observado; Mean = Media aritmética; $p_{0.01}, p_{0.05}, \dots, p_{0.99}$ = Percentiles específicos del 1 %, 5 %, 25 % (primer cuartil), 50 % (mediana), 75 % (tercer cuartil), 95 % y 99 %; Std = Desviación estándar; Coeff of Variation = Coeficiente de variación (Std / Mean); uc = Unidades curriculares.</small>
+
+Incluir gráfico de correlación y boxplot
+
+Tabla 2. *Resumen descriptivo de las variables categóricas del modelo ($N = 50.000$)*
+
+| Variable | Missing | Niveles | Moda | Frec_Moda | Largo |
+| :--- | :---: | :---: | :--- | :---: | :---: |
+| **Estudios_máximos_antes_de_la_inscripción** | 0 | 5 | Educación Secundaria | 43.950 | 50.000 |
+| **estado_civil** | 0 | 6 | Soltero | 45.861 | 50.000 |
+| **modo_aplicacion** | 0 | 4 | Acceso General | 34.694 | 50.000 |
+| **macro_categoria_carrera** | 0 | 6 | Comunicación, marketing y diseño | 12.490 | 50.000 |
+
+<small>Resumen de propiedades para las variables cualitativas y categóricas del conjunto de datos. Variable = Nombre del atributo analizado; Missing = Cantidad de datos faltantes; Niveles = Número de categorías únicas o distintas de la variable; Moda = Categoría con mayor frecuencia de aparición; Frec_Moda = Frecuencia absoluta (número de casos) correspondientes a la moda; Largo = Total de registros evaluados ($N$).</small>
+
 
 ### ii) Variable respuesta y tarea objetivo (T)
 
 La variable respuesta es `target`, con tres estados: **Graduado**, **Desertor** y **En curso**. Para la tarea multiclase se conservarán las tres categorías. Para la tarea binaria se excluirá temporalmente la categoría **En curso** y se clasificarán únicamente los casos **Graduado** y **Desertor**, de acuerdo con el objetivo de estimar el riesgo de deserción una vez finalizado el primer año.
 
-> **Completar:** indicar cómo se codificaron las etiquetas, qué clase se definió como evento positivo en la tarea binaria y cuántos casos quedaron disponibles después de esa selección.
+Las etiquetas fueron tipificadas de la siguiente manera:
+  - Graduado igual a 0
+  - Desertor igual a 1
+  - En Curso igual a 2
+
+La tabla 3 muestra la distribución de la variable objetivo. Podemos notar que no hay un desbalanceo llamativo en ninguna categoría y que la tasa de graduados es casi del 50%.
+
+Tabla 3. *Distribución de frecuencias de la variable objetivo (target) ($N = 50.000$)*
+
+| Variable | Frecuencia | Frecuencia relativa (%) |
+| :--- | :---: | :---: |
+| **Graduado** | 23.707 | 47,41 % |
+| **Desertor** | 16.529 | 33,06 % |
+| **En Curso** | 9.764 | 19,53 % |
+
+<small>Distribución de categorías de la variable dependiente u objetivo (target) del estudio. Variable = Estado académico final del estudiante; Frecuencia = Número absoluto de estudiantes en cada categoría; Frecuencia relativa (%) = Porcentaje respecto al total de la muestra analizada ($N = 50.000$).</small>
+
+Incluir IV 
 
 ### iii) Manejo de datos y esquemas de clasificación
+
+Para ambos modelos se separa el dataset en train y test (80/20) estratificando por la variable obtivo. Además, se utilizará exclusivamente el **F1-score** para evaluar y comparar los modelos, tanto en la tarea binaria como en la multiclase. Esta decisión se fundamenta en que esta métrica es mucho mas robusta cuando hay presencia de desbalance.
 
 #### Clasificación multiclase
 
 Describir la nueva separación de los datos y la estrategia utilizada para extender cada modelo al problema multiclase, por ejemplo one-vs-rest u one-vs-one. Indicar los hiperparámetros evaluados para K-NN y árboles de decisión, el número de particiones de la validación cruzada y los valores finalmente seleccionados.
+
+### Evaluación de modelos
+
 
 | Modelo | Estrategia multiclase | Hiperparámetros y rangos evaluados | Valores finales |
 | :---- | :---- | :---- | :---- |
@@ -48,28 +102,6 @@ Describir la nueva separación de los datos y la estrategia utilizada para exten
 | Boosting | **Completar** | **Completar** | **Completar** |
 | Bagging / Random Forest | **Completar** | **Completar** | **Completar** |
 
-#### Clasificación binaria
-
-Describir la separación entre entrenamiento y prueba, indicando proporciones, semilla aleatoria y si se utilizó estratificación. Se entrenarán y compararán regresión logística, máquinas de soporte vectorial y árboles de decisión. Luego se incorporará un ensamble por Voting, si corresponde al análisis realizado.
-
-Para cada modelo, completar la siguiente información:
-
-| Modelo | Hiperparámetros y rangos evaluados | Criterio de selección | Valores finales |
-| :---- | :---- | :---- | :---- |
-| Regresión logística | **Completar** | Validación cruzada: **completar** | **Completar** |
-| SVM | **Completar** | Validación cruzada: **completar** | **Completar** |
-| Árbol de decisión | **Completar** | Validación cruzada: **completar** | **Completar** |
-| Voting | **Completar** | **Completar** | **Completar** |
-
-### Evaluación de modelos
-
-Se utilizará exclusivamente el **F1-score** para evaluar y comparar los modelos, tanto en la tarea binaria como en la multiclase. Esta decisión se fundamenta en que el conjunto de datos puede presentar un desbalance entre categorías: una predicción que favorezca a la clase mayoritaria podría obtener una accuracy aparentemente alta sin detectar adecuadamente a los estudiantes desertores. El F1-score combina precisión y recall mediante su media armónica:
-
-$$F_1 = 2 \cdot \frac{\mathrm{precisión} \cdot \mathrm{recall}}{\mathrm{precisión} + \mathrm{recall}}$$
-
-Por lo tanto, el valor sólo será alto cuando el modelo mantenga simultáneamente un nivel adecuado de aciertos entre las predicciones positivas y de detección de los casos positivos. La media armónica penaliza los valores bajos: un modelo no podrá compensar un recall deficiente con una precisión elevada, o viceversa. Esto resulta especialmente relevante en la tarea binaria, donde el objetivo es detectar desertores sin generar un número excesivo de falsas alarmas. En la tarea multiclase se utilizará el **F1 macro**, que calcula el F1-score de cada clase y luego les asigna el mismo peso, evitando que la clase más frecuente domine la evaluación.
-
-El modelo final se seleccionará según el mayor F1-score obtenido en el conjunto de prueba, o según el mayor F1 macro en la tarea multiclase. Para reducir el riesgo de elegir un modelo por una partición favorable, la selección de hiperparámetros deberá realizarse exclusivamente dentro del conjunto de entrenamiento mediante validación cruzada. El F1-score no informa sobre calibración de probabilidades ni incorpora costos diferenciados para cada tipo de error; por eso, sus resultados se interpretarán junto con la matriz de confusión cuando esté disponible. Además, la importancia de una variable se entenderá como capacidad predictiva dentro del modelo y no como evidencia de una relación causal.
 
 ## Resultados
 
