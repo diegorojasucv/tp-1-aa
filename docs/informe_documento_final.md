@@ -4,11 +4,11 @@
 
 ## Resumen
 
-Este trabajo tiene tres objetivos relacionados con la deserción universitaria al cierre del primer año: comprender cómo se distingue la categoría «En curso» mediante una clasificación multiclase; desarrollar un modelo binario que, con información académica y personal del primer año, estime el riesgo de abandono de estudiantes que continúan en curso en cohortes futuras y oriente acciones de las áreas responsables; y analizar los factores asociados a la deserción mediante una regresión logística explicativa. Con datos de 50.000 estudiantes, Gradient Boosting obtuvo un F1-macro de 0,783 en la tarea multiclase y de 0,940 en la tarea binaria. En el modelo logístico reducido, el índice de rendimiento académico y la morosidad fueron los predictores con mayor importancia por permutación. Para entrenar y evaluar la tarea binaria se usaron casos con desenlace conocido (graduados o desertores); la intención es aplicar el modelo a estudiantes «En curso» de cohortes futuras, una vez disponibles sus datos del primer año.
+Este trabajo tiene tres objetivos relacionados con la deserción universitaria al cierre del primer año: comprender cómo se distingue la categoría «En curso» mediante una clasificación multiclase; desarrollar un modelo binario que, con información académica y personal del primer año, posteriormente sea utilizado para estimar el riesgo de abandono de estudiantes que continúan en curso en cohortes futuras y oriente acciones de las áreas responsables; y analizar los factores asociados a la deserción mediante una regresión logística explicativa. Con datos de 50.000 estudiantes, Gradient Boosting obtuvo un F1-macro de 0.783 en la tarea multiclase y de 0.940 en la tarea binaria. En el modelo logístico con variables seleccionadas también se obtuvo un F1-macro (0.93) similar al caso de todas las variables, donde el índice de rendimiento académico y la morosidad fueron los predictores con mayor de acuerdo a la importancia de atributos por permutación.
 
 ## Introducción
 
-Este trabajo aborda la deserción universitaria al finalizar el primer año con tres objetivos complementarios. Primero, comprender la categoría «En curso» y sus diferencias con «Graduado» y «Desertor» mediante una clasificación multiclase. Segundo, construir un modelo binario que estime el riesgo de abandono para que las áreas responsables puedan utilizarlo como insumo al planificar acciones de acompañamiento para los estudiantes que finalizan el primer año. Tercero, analizar mediante regresión logística qué factores se asocian con la deserción, con el propósito de facilitar la interpretación de sus determinantes. Una estimación de riesgo puede apoyar la identificación de necesidades, pero no debe utilizarse como decisión automática sobre la trayectoria individual.
+Este trabajo aborda la deserción universitaria al finalizar el primer año con tres objetivos complementarios. Primero, comprender la categoría «En curso» y sus diferencias con «Graduado» y «Desertor» mediante una clasificación multiclase. Segundo, construir un modelo binario que estime la probabilidad de abandono para que las áreas responsables puedan utilizarlo como insumo al planificar acciones de acompañamiento para los estudiantes que finalizan el primer año. Tercero, analizar mediante regresión logística qué factores se asocian con la deserción, con el propósito de facilitar la interpretación de sus determinantes. La intención de este estudio, no es sólo ayudar a detectar aquellos estudiantes con riesgo de abandono, sino también ofrecer otras herramientas que ayuden a comprender en detalle cada caso del estudiante detectado.
 
 La literatura teórica (Tinto, 1975, 1993; Bean, 1980; Bean y Metzner, 1985) y empírica (Yorke y Longden, 2004; OECD, 2019) caracteriza la deserción como un fenómeno multicausal, relacionado con factores individuales, institucionales, socioeconómicos y de integración académica. Como la relevancia de estos factores puede variar según el contexto, este estudio evalúa cuáles resultan más informativos en el conjunto de datos analizado.
 
@@ -16,9 +16,9 @@ La pregunta que guía el estudio es **¿cómo permiten las variables disponibles
 
 ## Materiales y métodos
 
-Se utilizó el conjunto de datos universitario provisto para el trabajo práctico, con 50.000 registros y 27 variables originales. Los nombres de las variables se normalizaron con el formato *lower_snake_case*. Las variables categóricas con respuestas «Sí» y «No» se recodificaron como indicadores binarios (1 y 0). Además, se construyeron variables numéricas derivadas, como promedios de los dos primeros semestres y razones entre variables existentes. El diccionario de datos, que describe las variables y sus valores, puede consultarse [aquí](../dataset/diccionario_datos_TP1_2026.xlsx).
+Se utilizó el conjunto de datos universitario provisto para el trabajo práctico, con 50.000 registros y 27 variables originales. Los nombres de las variables se normalizaron con el formato *lower_snake_case*. Las variables categóricas con respuestas «Sí» y «No» se recodificaron como indicadores binarios (1 y 0). Además, se construyeron variables numéricas derivadas, como promedios de los dos primeros semestres y razones entre variables existentes. El diccionario de datos, que describe las variables y sus valores, puede consultarse [aquí](https://github.com/diegorojasucv/tp-1-aa/blob/main/dataset/diccionario_datos_TP1_2026.xlsx). El código, las notebooks de análisis y entrenamiento, los modelos y otros resultados generados están disponibles en el [repositorio del proyecto](https://github.com/diegorojasucv/tp-1-aa).
 
-Para este estudio se asume que las variables explicativas corresponden a información recopilada al finalizar el primer año y disponible en ese momento para realizar la predicción, mientras que la variable objetivo representa el desenlace académico posterior. Bajo este supuesto, no habría *data leakage* temporal: los predictores estarían disponibles antes del desenlace que se busca anticipar.
+Para este estudio se asume que las variables explicativas corresponden a información recopilada al finalizar el primer año y disponible en ese momento para realizar la predicción, mientras que la variable objetivo representa el desenlace académico posterior. Bajo este supuesto, no habría *data leakage* temporal porque los predictores estarían disponibles antes del desenlace que se busca anticipar.
 
 ### i) Datos y variables explicativas (E)
 
@@ -65,7 +65,7 @@ Tabla 2. *Resumen descriptivo de las variables categóricas del modelo ($N = 50.
 
 La variable objetivo `target` identifica tres estados académicos: **Graduado**, **Desertor** y **En curso**. Para la clasificación multiclase se conservaron los tres estados y se codificaron como 0, 1 y 2, respectivamente. En la tarea binaria se utilizaron únicamente los casos con desenlace conocido —graduados (0) y desertores (1)—; se excluyeron los estudiantes en curso. El propósito es aplicar el modelo a estudiantes que continúan en curso en cohortes futuras, utilizando sus datos del primer año para estimar el riesgo de abandono.
 
-Como muestra la Tabla 3, los graduados representan el 47,41 % del conjunto, los desertores el 33,06 % y los estudiantes en curso el 19,53 %. Dado que las clases no tienen la misma frecuencia, se estratificaron las particiones y se utilizó F1-macro, que otorga el mismo peso a cada clase.
+Como muestra la Tabla 3, los graduados representan el 47,41 % del conjunto, los desertores el 33,06 % y los estudiantes en curso el 19,53 %. Dado que las clases no tienen la misma frecuencia, se estratificaron las particiones y se utilizó F1-macro como métrica de precisión en todos los modelos, ya que otorga el mismo peso a cada clase.
 
 Tabla 3. *Distribución de frecuencias de la variable objetivo (target) ($N = 50.000$)*
 
@@ -82,7 +82,7 @@ Tabla 3. *Distribución de frecuencias de la variable objetivo (target) ($N = 50
 
 #### Análisis exploratorio de los datos
 
-El análisis exploratorio se realizó antes del ajuste de los modelos. La Figura 1 presenta el agrupamiento jerárquico y la matriz de correlación de Spearman de las variables numéricas. Se observan asociaciones altas entre las unidades curriculares inscritas y aprobadas y las notas de ambos semestres; en varios pares, los coeficientes se sitúan aproximadamente entre 0,8 y 1,0. También se observa una correlación negativa cercana a -0,5 entre los indicadores de deuda y morosidad. Estas relaciones sugieren redundancia entre algunos predictores. Por este motivo, en el modelo logístico explicativo se redujo el conjunto de variables académicas y se construyó un índice compuesto.
+El análisis exploratorio se realizó antes del ajuste de los modelos. La Figura 1 presenta el agrupamiento jerárquico y la matriz de correlación de Spearman de las variables numéricas. Se observan asociaciones altas entre las unidades curriculares inscritas y aprobadas y las notas de ambos semestres; en varios pares, los coeficientes se sitúan aproximadamente entre 0.8 y 0.9. También se observa una correlación negativa cercana a -0.5 entre los indicadores de deuda y morosidad. Estas relaciones sugieren redundancia entre algunos predictores. Por este motivo, vamos a ver que cuando entrenemos el modelo logístico explicativo (variables seleccionadas) se redujo el conjunto de variables académicas y se construyó un índice compuesto para evitar problemas de multicolinealidad entre las variables.
 
 ![Matriz de correlación de las variables numéricas](../images/corr_todas_variables.png)
 Figura 1. *Agrupamiento jerárquico y matriz de correlación de Spearman de las variables numéricas.* Los valores de la matriz representan correlaciones por rangos; el agrupamiento muestra qué variables presentan patrones de asociación similares.
@@ -92,9 +92,9 @@ La Figura 2 compara las distribuciones de seis variables numéricas según el es
 ![Diagramas de caja de las principales variables numéricas por estado académico](../images/boxplot.png)
 Figura 2. *Distribución de variables numéricas según la categoría de `target`.* Las líneas centrales representan las medianas, las cajas el rango intercuartílico y los puntos las observaciones atípicas.
 
-La Tabla 4 presenta las diez variables con los valores más altos de Valor de Información (IV), una métrica que resume cuánto contribuye cada predictor a separar las categorías de una variable objetivo. Se utilizó la formulación habitual del IV para una respuesta binaria; por ello, el cálculo compara **Graduado** con **Desertor** y excluye los casos **En curso**. El ranking se calculó sobre el conjunto binario completo antes de la partición en entrenamiento y prueba y se utilizó únicamente como análisis exploratorio para identificar qué variables podían tener mayor capacidad predictiva. No se empleó para seleccionar variables ni ajustar los modelos; por ello, no se presenta como una evaluación independiente de su desempeño.
+La Tabla 4 presenta las diez variables con los valores más altos de Valor de Información (IV), una métrica que resume cuánto contribuye cada predictor a separar las categorías de una variable objetivo. Se utilizó la formulación habitual del IV para una respuesta binaria; por ello, el cálculo compara **Graduado** con **Desertor** y excluye los casos **En curso**. El ranking se calculó sobre el conjunto binario completo antes de la partición en entrenamiento y prueba y se utilizó únicamente como análisis exploratorio para identificar qué variables podían tener mayor capacidad predictiva. 
 
-Como referencia, suelen interpretarse valores de IV inferiores a 0,02 como casi nulos; entre 0,02 y 0,10 como débiles; entre 0,10 y 0,30 como moderados; y entre 0,30 y 0,50 como fuertes. Los valores superiores a 0,50 son inusualmente altos y pueden indicar *data leakage*, por lo que deben revisarse. En el top 10, `ratio_aprobadas_inscritas` (5,38) y `promedio_notas_semestres` (4,33) muestran los valores más altos, seguidos por el promedio de evaluaciones (1,65), la morosidad (1,42) y la condición de becario (0,97). En conjunto, el ranking destaca variables de rendimiento académico y de situación financiera.
+Como referencia, suelen interpretarse valores de IV inferiores a 0,02 como casi nulos; entre 0,02 y 0,10 como débiles; entre 0,10 y 0,30 como moderados; y entre 0,30 y 0,50 como fuertes. Los valores superiores a 0,50 son inusualmente altos y pueden indicar *data leakage*, por lo que deben revisarse. En el top 10, `ratio_aprobadas_inscritas` (5,38) y `promedio_notas_semestres` (4,33) muestran los valores más altos, seguidos por el promedio de evaluaciones (1,65), la morosidad (1,42) y la condición de becario (0,97). En conjunto, el ranking destaca variables de rendimiento académico y de situación financiera. Vamos a ver más adelante que esto esta bastante en línea con los hallazgos encontrados usando la técnica de importancia de atributos por permutación.
 
 Tabla 4. *Top 10 de variables predictoras con mayor Valor de Información (IV)*
 
@@ -115,9 +115,9 @@ Tabla 4. *Top 10 de variables predictoras con mayor Valor de Información (IV)*
 
 #### Partición del conjunto de datos
 
-Para cada tarea, los datos se dividieron en conjuntos de entrenamiento y prueba en una proporción de 80/20, con `random_state=42` y estratificación según la variable objetivo. Los hiperparámetros se seleccionaron mediante validación cruzada estratificada de cinco pliegues aplicada al conjunto de entrenamiento. El preprocesamiento categórico se incluyó en los *pipelines* para evitar fuga de información entre pliegues. Los modelos se compararon mediante F1-macro: se calcula el F1-score de cada clase —la media armónica entre *precision* y *recall*— y luego se promedian los resultados con el mismo peso. Esta medida es pertinente ante la distribución desigual de las categorías. Para mostrar los errores por clase se presenta también la matriz de confusión multiclase. Los valores de F1-macro de las Tablas 5 y 7 corresponden al conjunto de prueba.
+Para cada tarea, los datos se dividieron en conjuntos de entrenamiento y prueba en una proporción de 80/20, con `random_state=42` y estratificación según la variable objetivo. Los hiperparámetros se seleccionaron mediante validación cruzada estratificada de cinco splits aplicada al conjunto de entrenamiento. El preprocesamiento categórico se incluyó en los *pipelines* para evitar fuga de información entre splits. Los modelos se compararon mediante F1-macro: se calcula el F1-score de cada clase —la media armónica entre *precision* y *recall*— y luego se promedian los resultados con el mismo peso. Esta medida es pertinente ante la distribución desigual de las categorías. Para mostrar los errores por clase se presenta también la matriz de confusión multiclase. Los valores de F1-macro de las Tablas 5 y 7 corresponden al conjunto de prueba.
 
-Las variables categóricas se codificaron mediante *one-hot encoding*. Las variables numéricas se conservaron en sus escalas originales, excepto en K-NN, donde se escalaron porque este algoritmo se basa en distancias.
+Las variables categóricas se codificaron mediante *one-hot encoding*. Las variables numéricas se conservaron en sus escalas originales, excepto en K-NN, donde se escalaron previamente porque este algoritmo es sensible a la escala de las variables.
 
 ## Resultados
 
@@ -139,11 +139,11 @@ Tabla 5. *Resultados del ajuste de hiperparámetros y evaluación de modelos de 
 
 <small>Hiperparámetros seleccionados mediante búsqueda en rejilla (GridSearchCV) y validación cruzada estratificada de cinco pliegues; F1-macro calculado en el conjunto de prueba y redondeado a cuatro decimales. SVM = máquina de soporte vectorial; K-NN = vecinos más cercanos; OvR = uno contra el resto; OvO = uno contra uno.</small>
 
-La Tabla 6 presenta la matriz de confusión del mejor modelo multiclase: las filas corresponden a las clases reales y las columnas, a las predichas. La codificación es 0 = graduado, 1 = desertor y 2 = en curso. El modelo clasificó correctamente el 91,9 % de los graduados (4.356 de 4.741), el 81,6 % de los desertores (2.698 de 3.306) y el 59,5 % de los estudiantes en curso (1.163 de 1.953). Además, asignó a la clase graduado el 28,8 % de los casos que estaban en curso. Esto muestra que «En curso» es la clase más difícil de identificar, pero no justifica combinarla con graduados, ya que representan estados académicos diferentes.
+La Tabla 6 presenta la matriz de confusión del mejor modelo multiclase en el dataset de prueba: las filas corresponden a las clases reales y las columnas, a las predichas. La codificación es 0 = graduado, 1 = desertor y 2 = en curso. El modelo clasificó correctamente el 91,9 % de los graduados (4.356 de 4.741), el 81,6 % de los desertores (2.698 de 3.306) y el 59,5 % de los estudiantes en curso (1.163 de 1.953). Además, asignó a la clase graduado el 28,8 % de los casos que estaban en curso. Esto muestra que «En curso» es la clase más difícil de identificar, pero tampoco, esto justifica combinarla con graduados, ya que representan estados académicos diferentes. A lo sumo se pudiera usar para estimar la probabilidad de abandono luego de entrenar el modelo binario que vamos a ver más adelante.
 
 Este patrón es coherente con los diagramas de caja de la Figura 2, donde varias variables numéricas presentan distribuciones similares para «En curso» y «Graduado». Esa superposición puede contribuir a que el modelo confunda ambas clases, aunque no explica por sí sola todos los errores de clasificación.
 
-Tabla 6. *Matriz de confusión del mejor modelo seleccionado (Gradient Boosting)*
+Tabla 6. *Matriz de confusión del mejor modelo seleccionado (Gradient Boosting)en conjunto de prueba*
 
 | | Predicho: Clase 0 | Predicho: Clase 1 | Predicho: Clase 2 | Total Real |
 | :--- | :---: | :---: | :---: | :---: |
@@ -172,20 +172,34 @@ Tabla 7. *Resumen de optimización de hiperparámetros y F1-macro por modelo de 
 
 <small>Hiperparámetros seleccionados mediante GridSearchCV con validación cruzada estratificada de cinco pliegues; F1-macro calculado en el conjunto de prueba y redondeado a cuatro decimales. Voting (soft) combina las probabilidades de regresión logística, SVM y Random Forest; SVM = máquina de soporte vectorial; K-NN = vecinos más cercanos.</small>
 
-Para examinar qué factores se asocian con la deserción, se ajustó una regresión logística con un conjunto reducido de predictores, con el fin de facilitar la interpretación y disminuir la redundancia entre algunas variables académicas. El promedio de notas y la razón entre unidades aprobadas e inscritas se estandarizaron con la media y la desviación estándar del conjunto de entrenamiento. Luego se promediaron para formar `indice_rendimiento_academico` y se retiraron del modelo las dos variables originales. Como muestra la Figura 3, las correlaciones entre los predictores seleccionados son moderadas y menores que las observadas entre varios pares de variables académicas en la Figura 1.
+
+Dado el desempeño previo, podemos emplear el modelo de Gradient Boosting para las predicciones y complementar con una regresión logística para comprender mejor los factores clave detrás de la deserción estudiantil.
+
+Para facilitar la interpretación, ajustamos la regresión logística con un conjunto acotado de predictores donde simplificamos algunas variables académicas. En particular, estandarizamos el promedio de notas y la tasa de aprobación (unidades aprobadas/inscritas) según la media y desviación estándar del entrenamiento, y las sintetizamos en una única variable: `indice_rendimiento_academico`. Como muestra la Figura 3, las correlaciones del modelo final son moderadas, corrigiendo el solapamiento observado entre las variables académicas originales (Figura 1).
 
 ![Agrupamiento y correlación de las variables del modelo explicativo](../images/corr_variables_seleccionadas.png)
 Figura 3. *Agrupamiento jerárquico y matriz de correlación de Spearman de las variables seleccionadas.* El índice de rendimiento combina las variables académicas estandarizadas.
 
-En el conjunto de prueba, este modelo obtuvo un F1-macro cercano a 0,94, similar al del modelo logístico con más variables (Tabla 7). La reducción de predictores mantuvo un desempeño comparable y facilita la interpretación de los coeficientes.
-
 ### Modelo logístico explicativo
 
-#### Coeficientes del modelo
+La regresión logística se estimó con un conjunto reducido de predictores para facilitar la interpretación. A continuación, se examinan primero la curva de complejidad para diferentes valores del hiperparámetro $C$, después se realiza lo mismo pero analizando los coeficientes de las variables del modelo, y por último, la importancia de las variables usando permutación.
 
-La Tabla 8 presenta los coeficientes de la regresión logística estimada con el conjunto de entrenamiento de la tarea binaria. Como la deserción se codificó con 1, un coeficiente positivo se asocia con mayores *log-odds* de deserción y uno negativo, con menores *log-odds*, manteniendo constantes los demás predictores. El índice de rendimiento académico tiene un coeficiente negativo (-3,330), mientras que la morosidad presenta uno positivo (3,469); en ambos casos, los intervalos de confianza no incluyen cero. También se observan asociaciones positivas con el promedio de evaluaciones, la edad y el indicador masculino, y negativas con la condición de becario, el puntaje de ingreso y los ingresos familiares. Los coeficientes de las variables categóricas se interpretan en relación con las categorías de referencia omitidas. En términos generales, este patrón de asociaciones es compatible con la perspectiva multicausal de la literatura citada.
+#### Curva de complejidad
 
-Tabla 8. *Resultados de la regresión logística (Logit)*
+La Figura 4 muestra la curva de complejidad de la regresión logística con regularización L1. El eje horizontal representa el hiperparámetro $C$, inverso de la fuerza de regularización: cuanto menor es $C$, mayor es la penalización. El F1-macro de entrenamiento y prueba aumenta con rapidez para los valores más bajos de $C$ y se estabiliza alrededor de 0,1 donde ambas curvas se mantienen próximas en ese tramo. La búsqueda por validación cruzada de la regresión logística comparativa (Tabla 7) seleccionó $C=1$, pero en este caso vemos que un valor más bajo de $C$ ya estabiliza los errores. 
+
+![Curva de complejidad de la regresión logística con regularización L1](../images/curvas_complejidad_rl_lasso.png)
+Figura 4. *F1-macro en entrenamiento y prueba para distintos valores de $C$.* Un valor menor de $C$ implica una regularización más intensa.
+
+#### Coeficientes del modelo Lasso
+
+La Tabla 8 presenta los coeficientes de la regresión logística ajustada sobre las variables seleccionadas mediante regularización Lasso ($L1$, con $C=0,1$). Dado que la deserción se codificó como 1, los coeficientes positivos indican un incremento en las *log-odds* (y por tanto en la probabilidad) de desertar, mientras que los coeficientes negativos se asocian con una menor probabilidad de deserción, manteniendo constantes los demás predictores.
+
+Entre las variables cuantitativas estandarizadas, el `indice_rendimiento_academico` es la variable que más disminuye la probabilidad de abandonar los estudios ($\beta = -3,330$), mientras que la condición de morosidad constituye el factor que más incrementa dicho riesgo ($\beta = 3,469$). También aumentan la probabilidad de deserción la pertenencia a la carrera de *Ingeniería y tecnología* ($\beta = 1,383$), la presencia de necesidades educativas especiales ($\beta = 0,812$), el género masculino ($\beta = 0,513$) y el promedio de evaluaciones semestrales ($\beta = 0,247$). Por el contrario, contar con una beca ($\beta = -1,353$), cursar carreras del área de la *Salud* ($\beta = -0,892$) o ser estudiante internacional ($\beta = -0,815$) reducen significativamente el riesgo de desertar. 
+
+Las variables categóricas se interpretan respecto a sus categorías de referencia omitidas. La gran mayoría de los predictores retenidos resultaron estadísticamente significativos ($p < 0,05$) y sus signos concuerdan con la literatura teórica sobre deserción universitaria, lo que respalda la validez interpretativa del modelo.
+
+Tabla 8. *Resultados de la regresión logística Lasso (L1), con $C=0,1$*
 
 | Variable | Coeficiente ($\beta$) | Error estándar | Valor z | p-valor | IC 95% Inferior | IC 95% Superior |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -211,22 +225,30 @@ Tabla 8. *Resultados de la regresión logística (Logit)*
 | **Ingresos familia nivel** | -0,099 | 0,022 | -4,574 | <0,001 | -0,142 | -0,057 |
 | **Índice rendimiento académico** | -3,330 | 0,044 | -75,125 | <0,001 | -3,417 | -3,243 |
 
-<small>Modelo Logit estimado por máxima verosimilitud con el conjunto de entrenamiento ($N = 32.188$); grados de libertad = 20; pseudo-$R^2$ = 0,709; log-verosimilitud = -6.351,5; prueba de razón de verosimilitud, $p < 0,001$. $\beta$ = coeficiente en escala log-odds; IC 95 % = intervalo de confianza al 95 %. Para las variables categóricas, los coeficientes se comparan con la categoría de referencia omitida durante la codificación.</small>
+<small>Regresión logística Lasso con regularización L1 y $C=0,1$, ajustada con el conjunto de entrenamiento ($N = 32.188$). $\beta$ = coeficiente en escala log-odds; IC 95 % = intervalo de confianza al 95 %. Las categorías de las variables categóricas se comparan con sus categorías de referencia.</small>
 
-#### Curva de complejidad y análisis de importancia
+En el conjunto de prueba, este modelo obtuvo un F1-macro de 0,93, similar al del modelo logístico con más variables (Tabla 7). La Tabla 9 presenta su matriz de confusión, calculada también sobre el conjunto de prueba.
 
-La Figura 4 muestra la curva de complejidad de la regresión logística con regularización L1. El eje horizontal representa $C$, inverso de la fuerza de regularización: cuanto menor es $C$, mayor es la penalización. El F1-macro de entrenamiento y prueba aumenta con rapidez para los valores más bajos de $C$ y se estabiliza alrededor de 0,92–0,93 desde aproximadamente $C=0,01$; ambas curvas se mantienen próximas en el rango mostrado. La curva permite observar cómo cambia el desempeño al variar la regularización. Como se evaluaron varios valores de $C$ en el conjunto de prueba, sus resultados deben interpretarse con cautela.
+Tabla 9. *Matriz de confusión de la regresión logística explicativa (conjunto de prueba)*
 
-![Curva de complejidad de la regresión logística con regularización L1](../images/curvas_complejidad_rl_lasso.png)
-Figura 4. *F1-macro en entrenamiento y prueba para distintos valores de $C$.* Un valor menor de $C$ implica una regularización más intensa.
+| | Predicho: Clase 0 | Predicho: Clase 1 | Total Real |
+| :--- | :---: | :---: | :---: |
+| **Real: Clase 0** | **4.579** | 163 | 4.742 |
+| **Real: Clase 1** | 407 | **2.899** | 3.306 |
+| **Total Predicho** | 4.986 | 3.062 | 8.048 |
 
-La Figura 5 muestra qué coeficientes permanecen alejados de cero cuando la regularización es intensa. El coeficiente del índice de rendimiento académico es el más persistente a lo largo del rango de $C$, mientras que los de morosidad y algunas categorías de carrera aumentan al reducirse la penalización. Esto sugiere que el índice aporta una señal predictiva estable en este modelo. Sin embargo, dado que no todos los predictores numéricos están en la misma escala, la persistencia de sus coeficientes debe interpretarse con cautela. El análisis de la trayectoria se complementa con la importancia por permutación de la Figura 6, que muestra cuánto disminuye el F1-macro al permutar cada predictor.
+<small>Matriz de confusión de la regresión logística explicativa en el conjunto de prueba ($N = 8.048$). Filas = clase real; columnas = clase predicha; 0 = graduado y 1 = desertor. La diagonal contiene los aciertos y las restantes celdas, los errores.</small>
 
+
+#### Importancia de las variables
+
+La Figura 5 muestra cómo varían los coeficientes del modelo Lasso entrenado a lo largo del rango de $C$. El coeficiente del índice de rendimiento académico permanece alejado de cero incluso con regularización intensa, mientras que los de morosidad y algunas categorías de carrera aumentan al reducirse la penalización. Esto sugiere que el índice aporta una señal predictiva estable en este modelo. El análisis de la trayectoria se complementa con la importancia por permutación de la Figura 6,
+que muestra cuánto disminuye el F1-macro al permutar cada predictor.
 
 ![Evolución de los coeficientes de la regresión logística con regularización L1](../images/coeficientes_por_regularizacion.png)
 Figura 5. *Trayectoria de los coeficientes para distintos valores de $C$.* La línea horizontal discontinua marca el valor cero.
 
-La Figura 6 presenta la importancia por permutación, calculada como la disminución del F1-macro al permutar los valores de cada predictor. En el conjunto de prueba, el índice de rendimiento académico produce la mayor disminución (aproximadamente 0,31), seguido por la morosidad (cerca de 0,05) y el promedio de evaluaciones (alrededor de 0,01). Las demás variables generan cambios menores. El patrón similar entre entrenamiento y prueba indica que estas variables aportan información a las predicciones de esta regresión logística.
+La importancia por permutación de la Figura 6 se calculó como la disminución del F1-macro al permutar los valores de cada predictor. En el conjunto de prueba, el índice de rendimiento académico produce la mayor disminución (aproximadamente 0,31), seguido por la morosidad (cerca de 0,05) y el promedio de evaluaciones (alrededor de 0,01). Las demás variables generan cambios menores. El patrón similar entre entrenamiento y prueba indica que estas variables aportan información a las predicciones de esta regresión logística.
 
 ![Importancia de las variables por permutación en entrenamiento y prueba](../images/permutation_feature_importance.png)
 Figura 6. *Disminución del F1-macro tras permutar cada predictor.* Los paneles corresponden a entrenamiento y prueba; una disminución mayor indica una contribución predictiva mayor en este modelo.
@@ -238,13 +260,15 @@ Los resultados abordan la deserción desde tres perspectivas relacionadas: recon
 
 El objetivo predictivo binario es distinto: busca anticipar el abandono a partir de la información del primer año. Gradient Boosting obtuvo un F1-macro de 0,9404, prácticamente igual al de SVM (0,9403), mientras que el ensamble *Voting (soft)* no superó a los modelos individuales (Tabla 7). El F1-macro resume el equilibrio entre precisión y *recall* para las clases graduado y desertor. En este análisis, el modelo se entrenó y evaluó con casos históricos cuyo desenlace se conoce; se propone aplicarlo a estudiantes «En curso» de cohortes futuras para estimar el riesgo de abandono y orientar acciones de acompañamiento. Así, la tarea multiclase describe los estados académicos observados, mientras que la binaria se orienta a generar una predicción para quienes continúan estudiando.
 
-El objetivo explicativo busca identificar qué factores se asocian con la deserción. En la regresión logística reducida, los coeficientes (Tabla 8) y la importancia por permutación (Figura 6) destacan el índice de rendimiento académico y la morosidad; el promedio de evaluaciones también aporta información, aunque en menor medida. Las curvas ofrecen evidencia complementaria: en la Figura 4, el F1-macro se estabiliza cerca de 0,92–0,93 desde aproximadamente $C=0,01$, con resultados de entrenamiento y prueba próximos; en la Figura 5, el coeficiente del índice académico permanece alejado de cero incluso bajo una regularización intensa. La importancia del rendimiento coincide con los enfoques de integración académica de Tinto (1975, 1993), y la de factores económicos o administrativos es compatible con modelos que contemplan condiciones individuales y contextuales (Bean, 1980; Bean y Metzner, 1985; Yorke y Longden, 2004). Como el análisis es observacional, estos hallazgos describen asociaciones y no permiten afirmar que las variables identificadas causen la deserción. Los coeficientes y la importancia por permutación corresponden a la regresión logística reducida, no a Gradient Boosting.
+El objetivo explicativo busca identificar qué factores se asocian con la deserción. En la regresión logística reducida, los coeficientes (Tabla 8) y la importancia por permutación (Figura 6) destacan el índice de rendimiento académico y la morosidad; el promedio de evaluaciones también aporta información, aunque en menor medida. Las curvas ofrecen evidencia complementaria: en la Figura 4, el F1-macro se estabiliza cerca de 0,1 desde valores pequeños de $C$, con resultados de entrenamiento y prueba próximos; en la Figura 5, el coeficiente del índice académico permanece alejado de cero incluso bajo una regularización intensa. La importancia del rendimiento coincide con los enfoques de integración académica de Tinto (1975, 1993), y la de factores económicos o administrativos es compatible con modelos que contemplan condiciones individuales y contextuales (Bean, 1980; Bean y Metzner, 1985; Yorke y Longden, 2004). Como el análisis es observacional, estos hallazgos describen asociaciones y no permiten afirmar que las variables identificadas causen la deserción.
 
 ## Conclusión
 
-En conjunto, los análisis forman una secuencia complementaria: la clasificación multiclase permite distinguir estados académicos y muestra que «En curso» es la categoría más difícil de reconocer (F1-macro de Gradient Boosting = 0,7828); el modelo binario distingue graduados y desertores (F1-macro = 0,9404) y se propone para estimar el riesgo de abandono de estudiantes en curso en cohortes futuras; y la regresión logística señala el rendimiento académico y la morosidad como factores asociados a la deserción. La información del primer año puede contribuir así a comprender las trayectorias y orientar acciones de acompañamiento. La predicción debe apoyar el trabajo de las áreas responsables, no determinar automáticamente la trayectoria de cada estudiante.
+Con base en los resultados, Gradient Boosting permite distinguir los tres estados académicos en la tarea multiclase (F1-macro = 0,7828), aunque reconoce con menor acierto a «En curso» (59,5 %). En la tarea binaria predictiva, Gradient Boosting distingue graduados de desertores con buen desempeño a partir de variables académicas y personales disponibles al finalizar el primer año (F1-macro = 0,9404 en el conjunto de prueba), por ello, es un modelo candidato para estimar el riesgo de abandono de estudiantes «En curso» en cohortes futuras, debido a que presenta una buena precisión. Estas predicciones pueden orientar acciones de acompañamiento, pero deben apoyar el trabajo de las áreas responsables y no determinar automáticamente la trayectoria de cada estudiante. Finalmente, en la tarea binaria explicativa, la regresión logística con varias seleccionadas destaca el rendimiento académico y la morosidad como factores asociados con la deserción, bastante en línea con la literatura teórica, sin que esto quiera demostrar una relación causal.
 
 ## Bibliografía
+
+Scikit-learn developers. (s. f.). *Permutation Importance with Multicollinear or Correlated Features* [Feature importance con permutación](https://scikit-learn.org/stable/auto_examples/inspection/plot_permutation_importance_multicollinear.html#sphx-glr-auto-examples-inspection-plot-permutation-importance-multicollinear-py)
 
 Bean, J. P. (1980). Dropouts and turnover: The synthesis and test of a causal model of student attrition. *Research in Higher Education, 12*(2), 155-187.
 
