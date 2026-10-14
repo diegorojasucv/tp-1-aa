@@ -63,6 +63,17 @@ Los resultados corresponden a las particiones de prueba de este trabajo y no gar
 
 Se necesita Python 3 y un entorno que permita ejecutar notebooks Jupyter (por ejemplo, JupyterLab, Google Colab o VS Code con soporte para notebooks). Las dependencias principales utilizadas incluyen pandas, NumPy, scikit-learn, Matplotlib, seaborn, SciPy, OptBinning, Plotly y statsmodels. Algunas notebooks incluyen celdas para instalar paquetes; el entorno puede requerir dependencias adicionales según las celdas que se ejecuten.
 
+## Versión unificada para la entrega (Martín López y Diego Rojas)
+
+La entrega final combina los dos trabajos del grupo en **una sola notebook** que corre de punta a punta a partir del CSV original:
+
+- [`notebooks/TP1_desercion_final.ipynb`](notebooks/TP1_desercion_final.ipynb): limpieza (incluye eliminación de 313 filas duplicadas), EDA, Valor de Información, **tarea binaria Graduado vs. Desertor** (sin "En curso"; regresión logística, SVM, árbol, *Voting* hard/soft y Gradient Boosting de referencia, con curvas de complejidad por validación cruzada), **aplicación del modelo a los estudiantes "En curso"**, **modelo logístico explicativo** (índice de rendimiento académico, Lasso con regla de 1 error estándar, reajuste con IC 95 %, VIF, importancia por permutación y dependencia parcial por grupos), **tarea multiclase** (K-NN, árbol, Random Forest, AdaBoost, XGBoost) e importancia por permutación por grupos de variables correlacionadas.
+- Figuras: `images/informe/`. Resultados numéricos: `notebooks/resultados.json`.
+- Informe: [`docs/TP1_informe_final.pdf`](docs/TP1_informe_final.pdf) y su fuente LaTeX para Overleaf en `docs/informe_latex/` (subir la carpeta completa).
+- Dependencias: `pip install -r requirements.txt` (scikit-learn ≥ 1.7). La corrida completa tarda alrededor de 1 hora en una máquina de 2 núcleos.
+
+Cambios respecto de las notebooks originales de la parte binaria: se estandarizan las variables numéricas dentro del `Pipeline` (antes solo se aplicaba *one-hot*), la SVM busca también `gamma`, el *Voting* combina los modelos pedidos por la consigna (LR + SVM + árbol), las curvas de complejidad se calculan con validación cruzada (no con el test) y se eliminan los duplicados. Los resultados se mantienen muy cercanos a los originales (F1-macro binario ≈ 0,94).
+
 ## Informe
 
 El informe completo se encuentra en [formato Markdown](docs/informe_documento_final.md) y [formato PDF](docs/informe_documento_final.pdf). La guía de presentación del trabajo está en [docs/formato_informe.md](docs/formato_informe.md).
