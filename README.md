@@ -61,7 +61,7 @@ Los resultados corresponden a las particiones de prueba de este trabajo y no gar
 
 ## Requisitos y ejecución
 
-Se necesita Python 3 y un entorno que permita ejecutar notebooks Jupyter (por ejemplo, JupyterLab, Google Colab o VS Code con soporte para notebooks). Las dependencias principales utilizadas incluyen pandas, NumPy, scikit-learn, Matplotlib, seaborn, SciPy, OptBinning, Plotly y statsmodels. Algunas notebooks incluyen celdas para instalar paquetes; el entorno puede requerir dependencias adicionales según las celdas que se ejecuten.
+Se necesita **Python 3.10 o posterior** (se recomienda Python 3.11) y un entorno que permita ejecutar notebooks Jupyter (por ejemplo, JupyterLab, Google Colab o VS Code con soporte para notebooks). Las dependencias principales utilizadas incluyen pandas, NumPy, scikit-learn, Matplotlib, seaborn, SciPy, OptBinning, Plotly y statsmodels. Algunas notebooks incluyen celdas para instalar paquetes; el entorno puede requerir dependencias adicionales según las celdas que se ejecuten.
 
 ## Versión unificada para la entrega (Martín López y Diego Rojas)
 
@@ -70,10 +70,51 @@ La entrega final combina los dos trabajos del grupo en **una sola notebook** que
 - [`notebooks/TP1_desercion_final.ipynb`](notebooks/TP1_desercion_final.ipynb): limpieza (incluye eliminación de 313 filas duplicadas), EDA, Valor de Información, **tarea binaria Graduado vs. Desertor** (sin "En curso"; regresión logística, SVM, árbol, *Voting* hard/soft y Gradient Boosting de referencia, con curvas de complejidad por validación cruzada), **aplicación del modelo a los estudiantes "En curso"**, **modelo logístico explicativo** (índice de rendimiento académico, Lasso con regla de 1 error estándar, reajuste con IC 95 %, VIF, importancia por permutación y dependencia parcial por grupos), **tarea multiclase** (K-NN, árbol, Random Forest, AdaBoost, XGBoost) e importancia por permutación por grupos de variables correlacionadas.
 - Figuras: `images/informe/`. Resultados numéricos: `notebooks/resultados.json`.
 - Informe: [`docs/TP1_informe_final.pdf`](docs/TP1_informe_final.pdf) y su fuente LaTeX para Overleaf en `docs/informe_latex/` (subir la carpeta completa).
-- Dependencias: `pip install -r requirements.txt` (scikit-learn ≥ 1.7). La corrida completa tarda alrededor de 1 hora en una máquina de 2 núcleos.
 
-Cambios respecto de las notebooks originales de la parte binaria: se estandarizan las variables numéricas dentro del `Pipeline` (antes solo se aplicaba *one-hot*), la SVM busca también `gamma`, el *Voting* combina los modelos pedidos por la consigna (LR + SVM + árbol), las curvas de complejidad se calculan con validación cruzada (no con el test) y se eliminan los duplicados. Los resultados se mantienen muy cercanos a los originales (F1-macro binario ≈ 0,94).
+### Cómo ejecutar la notebook unificada
 
-## Informe
+1. Instala Python 3.11 y crea un entorno virtual. Usa las instrucciones correspondientes a tu sistema operativo:
 
-El informe completo se encuentra en [formato Markdown](docs/informe_documento_final.md) y [formato PDF](docs/informe_documento_final.pdf). La guía de presentación del trabajo está en [docs/formato_informe.md](docs/formato_informe.md).
+   **macOS**
+
+   Si no tienes Homebrew, puedes instalar Python 3.11.x usando el instalador de [python.org](https://www.python.org/downloads/macos/). Si tienes Homebrew:
+
+    ```bash
+    brew install python@3.11
+    ```
+
+   Abre una terminal nueva, ve a la carpeta raíz del repositorio y crea el entorno:
+
+   ```bash
+    python3.11 -m venv .venv
+    source .venv/bin/activate
+    ```
+
+   **Windows**
+
+   Descarga Python 3.11.x desde [python.org](https://www.python.org/downloads/windows/) y, durante la instalación, marca **Add Python to PATH**. Abre PowerShell en la carpeta raíz del repositorio y crea el entorno:
+
+   ```powershell
+   py -3.11 -m venv .venv
+   .venv\Scripts\Activate.ps1
+   ```
+
+   Si PowerShell bloquea la activación del entorno, ejecuta `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` una vez y vuelve a activar. Si ya existe `.venv` y fue creada con una versión anterior de Python, elimínala antes de crearla nuevamente con Python 3.11.
+
+   **Instalación de dependencias (macOS y Windows)**
+
+   Con el entorno `.venv` activado, en cualquiera de los dos sistemas ejecuta:
+
+   ```bash
+   python -m pip install --upgrade pip
+   python -m pip install -r requirements.txt
+   python -m pip install ipykernel
+   ```
+
+    En macOS, instala además la biblioteca OpenMP que necesita XGBoost: `brew install libomp`. Si VS Code ya tenía abierta la notebook, reinicia el kernel después de instalarla para que pueda cargar la biblioteca.
+
+2. Abre [`notebooks/TP1_desercion_final.ipynb`](notebooks/TP1_desercion_final.ipynb). En la esquina superior derecha, selecciona como kernel el entorno `.venv` recién creado. Si no aparece, recarga la ventana de VS Code y vuelve a seleccionarlo.
+3. Ejecuta las celdas **en orden, desde el principio hasta el final** (en VS Code: **Run All**). La notebook lee el CSV de `dataset/`, crea las figuras en `images/informe/` y guarda `resultados.json` en el directorio de trabajo. Para que quede en `notebooks/`, establece `jupyter.notebookFileRoot` en `${workspaceFolder}/notebooks` en la configuración de VS Code.
+4. Espera a que termine la ejecución completa: el entrenamiento y la validación cruzada pueden tardar alrededor de una hora en una máquina de 2 núcleos. No cierres el kernel mientras esté trabajando.
+
+Si aparece `ModuleNotFoundError` (por ejemplo, para `xgboost`), comprueba que el kernel seleccionado sea `.venv` y que hayas instalado allí las dependencias con `pip install -r requirements.txt`; luego reinicia el kernel y vuelve a ejecutar todas las celdas.
